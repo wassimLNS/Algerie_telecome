@@ -32,22 +32,24 @@ Portail web de gestion des réclamations (tickets) pour **Algérie Télécom**. 
 Permettre aux clients d'Algérie Télécom de déposer leurs réclamations en ligne et aux agents de les traiter efficacement, avec un système d'attribution automatique, de chat en temps réel, et de rapports de performance.
 
 ### Types de Dérangements Supportés
-| Code | Libellé | Priorité |
-|---|---|---|
-| PAS_TONALITE | Pas de tonalité | Haute |
-| PAS_APPELS | Pas d'appels émis/reçus | Haute |
-| FRITURES_LIGNE | Fritures sur ligne | Normale |
-| CHUTE_DEBIT | Chute de débit internet | Normale |
-| PAS_INTERNET | Pas d'internet | Haute |
-| LIAISON_SPECIALISEE | Liaison spécialisée | Haute |
-| IDOOM_INTERNET_PRO | IDOOM Internet PRO | Normale |
-| INTRANET_VPN | Intranet/VPN | Haute |
-| SIGNAUX_NON_RETABLIS | Problèmes signaux non rétablis | Haute |
-| PING_ELEVE | Ping élevé | Normale |
-| UPLOAD_FAIBLE | Upload faible | Normale |
-| COUPURES_REPETITIVES | Coupures répétitives | Haute |
-| COUVERTURE_4G | Problème de couverture réseau (4G LTE) | Normale |
-| PAS_TONALITE_INTERNET | Pas de tonalité / pas d'internet | Critique |
+Les types de service sont pré-remplis automatiquement via une migration de données (`0004_populate_types_service`). La priorité n'est pas définie par le type de service — elle sera déterminée par un **chatbot IA** qui discutera avec le client en amont.
+
+| Code | Libellé |
+|---|---|
+| PAS_TONALITE | Pas de tonalité |
+| PAS_APPELS | Pas d'appels émis/reçus |
+| FRITURES_LIGNE | Fritures sur ligne |
+| CHUTE_DEBIT | Chute de débit internet |
+| PAS_INTERNET | Pas d'internet |
+| LIAISON_SPECIALISEE | Liaison spécialisée |
+| IDOOM_INTERNET_PRO | IDOOM Internet PRO |
+| INTRANET_VPN | Intranet/VPN |
+| SIGNAUX_NON_RETABLIS | Problèmes signaux non rétablis |
+| PING_ELEVE | Ping élevé |
+| UPLOAD_FAIBLE | Upload faible |
+| COUPURES_REPETITIVES | Coupures répétitives |
+| COUVERTURE_4G | Problème de couverture réseau (4G LTE) |
+| PAS_TONALITE_INTERNET | Pas de tonalité / pas d'internet |
 
 ---
 
@@ -319,6 +321,7 @@ app/
 - Signal `pre_save` → email automatique si statut change
 - Génération automatique du numéro ticket : `TKT-{ANNÉE}-{XXXXXX}`
 - Numéro généré via `MAX()` sur les numéros existants pour éviter les collisions après suppression
+- **Migration de données** `0004_populate_types_service` : pré-remplit les 14 types de service automatiquement à chaque `migrate`
 
 ### App `chat`
 - Modèle : `Message`
@@ -500,9 +503,10 @@ EstAgentEscalade → role in ['agent_technique', 'agent_annexe']
 
 ### Attribution Automatique des Tickets
 1. Client crée un ticket
-2. Système détecte le centre via `client.centre`
-3. Si attribution auto activée → attribue à l'agent avec le moins de tickets actifs
-4. Calcule l'échéance SLA selon la priorité
+2. Un **chatbot IA** discute avec le client pour qualifier le problème et **déterminer la priorité**
+3. Système détecte le centre via `client.centre`
+4. Si attribution auto activée → attribue à l'agent avec le moins de tickets actifs
+5. Calcule l'échéance SLA selon la priorité définie par l'IA
 
 ### Calcul SLA
 | Priorité | Délai par défaut |

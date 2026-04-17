@@ -24,8 +24,9 @@ function getStatusInfo(agent) {
   return { label: 'Offline', dot: 'bg-amber-500' };
 }
 
-export function AgentManagement({ agents = [], performances = [], onRefresh, onAuditAgent }) {
+export function AgentManagement({ agents = [], performances: rawPerformances = [], onRefresh, onAuditAgent }) {
   const { t } = useTranslation();
+  const performances = Array.isArray(rawPerformances) ? rawPerformances : [];
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({
     nom: '', prenom: '', email: '', telephone: '', role: 'agent', mot_de_passe: ''
