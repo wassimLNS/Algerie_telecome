@@ -104,11 +104,45 @@ class ParametresCentreView(APIView):
         except ParametresCentre.DoesNotExist:
             parametres = ParametresCentre.objects.create(centre=request.user.centre)
 
+        was_manual = not parametres.attribution_auto_active
+
         serializer = ParametresCentreSerializer(parametres, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save(updated_by=request.user)
+
+            # Si on réactive le mode auto, assigner tous les tickets non-assignés
+            now_auto = serializer.instance.attribution_auto_active
+            if was_manual and now_auto:
+                self._assign_pending_tickets(request.user.centre)
+
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def _assign_pending_tickets(self, centre):
+        """Assigne automatiquement tous les tickets sans agent du centre."""
+        from apps.tickets.models import Ticket
+        from apps.users.models import Utilisateur, Role
+
+        agents = Utilisateur.objects.filter(centre=centre, role=Role.AGENT, actif=True)
+        if not agents.exists():
+            return
+
+        pending = Ticket.objects.filter(
+            centre=centre,
+            agent__isnull=True,
+            statut__in=['soumis', 'ouvert']
+        ).order_by('created_at')
+
+        for ticket in pending:
+            agent_min = min(
+                agents,
+                key=lambda a: a.tickets_agent.filter(
+                    statut__in=['ouvert', 'en_cours']
+                ).count()
+            )
+            ticket.agent = agent_min
+            ticket.attribution_auto = True
+            ticket.save()
 
 
 # ============================================================

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { AuthContext } from '@/contexts/AuthContext';
-import { getAdminStats, getAgentsPerformance, getAgentsList, getAllTickets, exportPDF, exportExcel, getSessionHistory, updateCentreParams } from '@/api/admin';
+import { getAdminStats, getAgentsPerformance, getAgentsList, getAllTickets, exportPDF, exportExcel, getSessionHistory, updateCentreParams, getCentreParams } from '@/api/admin';
 import { getMessages } from '@/api/chat';
 import { AdminOverview } from '@/components/features/admin/AdminOverview';
 import { AgentManagement } from '@/components/features/admin/AgentManagement';
@@ -37,10 +37,9 @@ export default function AdminView() {
   const [filterAgent, setFilterAgent] = useState('all');
   const [filterStartDate, setFilterStartDate] = useState('');
   const [filterEndDate, setFilterEndDate] = useState('');
-  const [assignmentMode, _setAssignmentMode] = useState(() => localStorage.getItem('assignmentMode') || 'auto');
+  const [assignmentMode, _setAssignmentMode] = useState('auto');
   const setAssignmentMode = async (mode) => {
     _setAssignmentMode(mode);
-    localStorage.setItem('assignmentMode', mode);
     try {
       await updateCentreParams({ attribution_auto_active: mode === 'auto' });
     } catch (e) {
@@ -67,13 +66,17 @@ export default function AdminView() {
         sessionFilters.role = filterAgent;
       }
 
-      const [s, p, a, t, sess] = await Promise.all([
+      const [s, p, a, t, sess, centreParams] = await Promise.all([
         getAdminStats(filters).catch(() => null),
         getAgentsPerformance(filters).catch(() => []),
         getAgentsList().catch(() => []),
         getAllTickets(filters).catch(() => []),
         getSessionHistory(sessionFilters).catch(() => []),
+        getCentreParams().catch(() => null),
       ]);
+      if (centreParams) {
+        _setAssignmentMode(centreParams.attribution_auto_active ? 'auto' : 'manual');
+      }
       setStats(s);
       setPerformances(p);
       setAgents(a);

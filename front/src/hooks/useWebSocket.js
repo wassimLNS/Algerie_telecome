@@ -6,9 +6,6 @@ import Cookies from 'js-cookie';
  *
  * @param {string|null} ticketId  — L'ID du ticket (UUID). `null` = pas de connexion.
  * @returns {{ messages, sendMessage, isConnected }}
- *
- * Usage :
- *   const { messages, sendMessage, isConnected } = useWebSocket(ticket?.id);
  */
 export function useWebSocket(ticketId) {
   const [messages, setMessages] = useState([]);
@@ -16,8 +13,9 @@ export function useWebSocket(ticketId) {
   const wsRef = useRef(null);
   const reconnectTimer = useRef(null);
   const retryCount = useRef(0);
+  const seenIds = useRef(new Set()); // Anti-doublon robuste
   const MAX_RETRIES = 5;
-  // Récupérer le token JWT depuis les cookies
+
   const getToken = useCallback(() => {
     return Cookies.get('access') || null;
   }, []);
@@ -33,9 +31,9 @@ export function useWebSocket(ticketId) {
     // Fermer toute connexion précédente
     if (wsRef.current) {
       wsRef.current.close();
+      wsRef.current = null;
     }
 
-    const wsProtocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
     const wsHost = import.meta.env.VITE_WS_URL || 'ws://127.0.0.1:8000';
     const wsUrl = `${wsHost}/ws/chat/${ticketId}/?token=${token}`;
 
@@ -52,8 +50,11 @@ export function useWebSocket(ticketId) {
       try {
         const data = JSON.parse(event.data);
 
-        if (data.type === 'message') {
-          // Nouveau message reçu du serveur
+        if (data.type === 'message' && data.message_id) {
+          // Anti-doublon : ignorer si on a déjà vu cet ID
+          if (seenIds.current.has(data.message_id)) return;
+          seenIds.current.add(data.message_id);
+
           const newMsg = {
             id: data.message_id,
             contenu: data.contenu,
@@ -65,7 +66,6 @@ export function useWebSocket(ticketId) {
           };
           setMessages(prev => [...prev, newMsg]);
         }
-        // type === 'connexion' => info log uniquement
       } catch (err) {
         console.error('[WS] Erreur parsing message:', err);
       }
@@ -74,6 +74,9 @@ export function useWebSocket(ticketId) {
     ws.onclose = (event) => {
       console.log('[WS] ❌ Déconnecté (code:', event.code, ')');
       setIsConnected(false);
+
+      // Ne pas reconnecter si on a fermé volontairement
+      if (wsRef.current !== ws) return;
       wsRef.current = null;
 
       // Reconnexion automatique avec backoff exponentiel
@@ -106,17 +109,22 @@ export function useWebSocket(ticketId) {
 
   // Connexion / déconnexion quand le ticketId change
   useEffect(() => {
-    setMessages([]); // Reset messages quand on change de ticket
+    // Reset
+    setMessages([]);
+    seenIds.current = new Set();
+
     connect();
 
     return () => {
-      // Cleanup à la déconnexion
+      // Cleanup
       if (reconnectTimer.current) {
         clearTimeout(reconnectTimer.current);
+        reconnectTimer.current = null;
       }
       if (wsRef.current) {
-        wsRef.current.close();
-        wsRef.current = null;
+        const ws = wsRef.current;
+        wsRef.current = null; // marque comme fermé volontairement
+        ws.close();
       }
       setIsConnected(false);
     };
