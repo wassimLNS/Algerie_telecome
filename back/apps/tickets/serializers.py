@@ -109,7 +109,7 @@ class TicketListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model  = Ticket
-        fields = ['id', 'numero_ticket', 'titre', 'statut', 'priorite', 'type_service_libelle', 'client_nom', 'client_prenom', 'agent_nom', 'agent_prenom', 'centre_nom', 'nombre_messages', 'created_at', 'echeance_sla']
+        fields = ['id', 'numero_ticket', 'titre', 'statut', 'priorite', 'source', 'type_service_libelle', 'client_nom', 'client_prenom', 'agent_nom', 'agent_prenom', 'centre_nom', 'nombre_messages', 'created_at', 'echeance_sla']
 
     def get_nombre_messages(self, obj):
         return obj.messages.count()
@@ -127,7 +127,7 @@ class TicketDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model  = Ticket
-        fields = ['id', 'numero_ticket', 'titre', 'description', 'statut', 'priorite', 'type_service', 'client_nom', 'client_prenom', 'client_tel', 'agent_nom', 'agent_prenom', 'centre_nom', 'attribution_auto', 'resolution', 'satisfaction_client', 'commentaire_satisfaction', 'pieces_jointes', 'created_at', 'updated_at', 'pris_en_charge_a', 'resolu_a', 'ferme_a', 'echeance_sla']
+        fields = ['id', 'numero_ticket', 'titre', 'description', 'statut', 'priorite', 'source', 'email_source', 'email_actif', 'type_service', 'client_nom', 'client_prenom', 'client_tel', 'agent_nom', 'agent_prenom', 'centre_nom', 'attribution_auto', 'resolution', 'satisfaction_client', 'commentaire_satisfaction', 'pieces_jointes', 'created_at', 'updated_at', 'pris_en_charge_a', 'resolu_a', 'ferme_a', 'echeance_sla']
 
 
 class MettreAJourTicketSerializer(serializers.ModelSerializer):

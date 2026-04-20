@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext, useMemo, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { AuthContext } from '@/contexts/AuthContext';
-import { getAgentTickets, getAgentTicketDetail, updateTicketStatus, escalateTicket, getEscalatedTickets, getTicketClientHistory } from '@/api/tickets';
+import { getAgentTickets, getAgentTicketDetail, updateTicketStatus, escalateTicket, getEscalatedTickets, getTicketClientHistory, toggleEmailRelay } from '@/api/tickets';
 import { getMessages, sendMessage as sendMessageAPI, getAISummary } from '@/api/chat';
 import { useWebSocket } from '@/hooks/useWebSocket';
 import { AgentDashboard } from '@/components/features/workspace/AgentDashboard';
@@ -15,7 +15,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Search, Activity, Cpu, X, Send, CheckCircle2, ArrowUpCircle,
-  BrainCircuit, Loader2, User, Phone, Info, ShieldAlert, MapPin, FileText, Paperclip, Eye, Calendar
+  BrainCircuit, Loader2, User, Phone, Info, ShieldAlert, MapPin, FileText, Paperclip, Eye, Calendar, Mail, MailOff
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import api from '@/api/axios';
@@ -505,7 +505,7 @@ export default function WorkspaceView({ agentRole = 'agent' }) {
                         <div className={`workspace-msg-bubble ${isAgent ? 'outgoing' : 'incoming'}`}>
                           <p className="msg-text">{m.contenu || m.text}</p>
                           <div className="msg-meta">
-                            <span>{senderLabel}</span>
+                            <span>{senderLabel}{m.via_email && <Mail className="w-3 h-3 inline ml-1 opacity-60" />}</span>
                             <span>{dateStr}</span>
                           </div>
                         </div>
@@ -526,12 +526,34 @@ export default function WorkspaceView({ agentRole = 'agent' }) {
             {/* Footer */}
             {agentRole === 'agent' && !isClosed ? (
               <div className="workspace-chat-footer">
-                <Button className="workspace-resolve-btn" onClick={handleResolve}>
-                  <CheckCircle2 className="w-5 h-5 mr-3" /> Clôturer Ticket (Solution Rétablie)
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button className="workspace-resolve-btn flex-1" onClick={handleResolve}>
+                    <CheckCircle2 className="w-5 h-5 mr-3" /> Clôturer Ticket (Solution Rétablie)
+                  </Button>
+                  {selectedTicket.source === 'email' && (
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "h-10 px-3 text-xs font-bold border-2 rounded-xl transition-all",
+                        selectedTicket.email_actif
+                          ? "border-blue-400 text-blue-600 bg-blue-50 hover:bg-blue-100"
+                          : "border-slate-300 text-slate-400 bg-slate-50 hover:bg-slate-100"
+                      )}
+                      onClick={async () => {
+                        try {
+                          const res = await toggleEmailRelay(selectedTicket.id);
+                          setSelectedTicket(prev => ({ ...prev, email_actif: res.email_actif }));
+                        } catch (e) { console.error(e); }
+                      }}
+                      title={selectedTicket.email_actif ? 'Désactiver le relais email' : 'Activer le relais email'}
+                    >
+                      {selectedTicket.email_actif ? <Mail className="w-4 h-4" /> : <MailOff className="w-4 h-4" />}
+                    </Button>
+                  )}
+                </div>
                 <div className="workspace-reply-form">
                   <Textarea
-                    placeholder="Réponse à l'abonné..."
+                    placeholder={selectedTicket.source === 'email' && selectedTicket.email_actif ? "Réponse (sera aussi envoyée par email)..." : "Réponse à l'abonné..."}
                     className="workspace-reply-input"
                     value={replyText}
                     onChange={(e) => setReplyText(e.target.value)}

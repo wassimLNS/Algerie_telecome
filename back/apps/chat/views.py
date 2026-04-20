@@ -104,6 +104,28 @@ class MessagesTicketView(APIView):
                 ticket.statut = 'en_cours'
                 ticket.save()
 
+            # Relais email : si ticket source=email et email_actif, notifier n8n
+            if (request.user.role != 'client' and 
+                ticket.source == 'email' and 
+                ticket.email_actif and 
+                ticket.email_source):
+                try:
+                    import requests as http_requests
+                    from django.conf import settings as django_settings
+                    webhook_url = django_settings.N8N_WEBHOOK_URL + 'agent-reply'
+                    http_requests.post(webhook_url, json={
+                        'ticket_id': str(ticket.id),
+                        'numero_ticket': ticket.numero_ticket,
+                        'email_destination': ticket.email_source,
+                        'agent_nom': f"{request.user.prenom} {request.user.nom}",
+                        'contenu': serializer.validated_data['contenu'],
+                    }, timeout=5)
+                except Exception as e:
+                    import logging
+                    logging.getLogger(__name__).warning(f"Webhook n8n échoué: {e}")
+                message.via_email = True
+                message.save(update_fields=['via_email'])
+
             return Response(MessageSerializer(message).data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

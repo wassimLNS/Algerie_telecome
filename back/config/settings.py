@@ -204,3 +204,10 @@ STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+# ============================================================
+# N8N — Intégration email
+# ============================================================
+N8N_API_KEY     = config('N8N_API_KEY', default='n8n-secret-key-change-me')
+N8N_WEBHOOK_URL = config('N8N_WEBHOOK_URL', default='http://localhost:5678/webhook/')

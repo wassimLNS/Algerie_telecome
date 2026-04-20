@@ -23,6 +23,11 @@ class PrioriteTicket(models.TextChoices):
     CRITIQUE = 'critique', 'Critique'
 
 
+class SourceTicket(models.TextChoices):
+    WEB   = 'web',   'Web'
+    EMAIL = 'email', 'Email'
+
+
 class TypeEscalade(models.TextChoices):
     TECHNIQUE = 'technique', 'Technique'
     ANNEXE    = 'annexe',    'Annexe'
@@ -102,6 +107,11 @@ class Ticket(models.Model):
 
     # --- Attribution ---
     attribution_auto = models.BooleanField(default=True)
+
+    # --- Source (web ou email via n8n) ---
+    source       = models.CharField(max_length=10, choices=SourceTicket.choices, default=SourceTicket.WEB)
+    email_source = models.EmailField(null=True, blank=True, help_text="Email d'origine de la réclamation")
+    email_actif  = models.BooleanField(default=True, help_text="Relais email actif pour ce ticket")
 
     # --- Résolution ---
     resolution               = models.TextField(null=True, blank=True)

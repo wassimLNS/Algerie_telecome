@@ -102,3 +102,9 @@ export const assignTicketToAgent = async (ticketId, agentId) => {
   const response = await api.post(`/tickets/admin/${ticketId}/attribuer/`, { agent_id: agentId });
   return response.data;
 };
+
+// Toggle email relay for a ticket
+export const toggleEmailRelay = async (ticketId) => {
+  const response = await api.post(`/tickets/${ticketId}/toggle-email/`);
+  return response.data;
+};
