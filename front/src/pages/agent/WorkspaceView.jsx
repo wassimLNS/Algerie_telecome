@@ -15,7 +15,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Search, Activity, Cpu, X, Send, CheckCircle2, ArrowUpCircle,
-  BrainCircuit, Loader2, User, Phone, Info, ShieldAlert, MapPin, FileText, Paperclip, Eye, Calendar, Mail, MailOff
+  BrainCircuit, Loader2, User, Phone, Info, ShieldAlert, MapPin, FileText, Paperclip, Eye, Calendar, Mail, MailX
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import api from '@/api/axios';
@@ -547,7 +547,7 @@ export default function WorkspaceView({ agentRole = 'agent' }) {
                       }}
                       title={selectedTicket.email_actif ? 'Désactiver le relais email' : 'Activer le relais email'}
                     >
-                      {selectedTicket.email_actif ? <Mail className="w-4 h-4" /> : <MailOff className="w-4 h-4" />}
+                      {selectedTicket.email_actif ? <Mail className="w-4 h-4" /> : <MailX className="w-4 h-4" />}
                     </Button>
                   )}
                 </div>
