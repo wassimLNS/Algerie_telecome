@@ -6,9 +6,20 @@ export const getMessages = async (ticketId) => {
   return response.data;
 };
 
-// Send a message on a ticket
+// Send a text message on a ticket
 export const sendMessage = async (ticketId, contenu) => {
   const response = await api.post(`/chat/${ticketId}/messages/`, { contenu });
+  return response.data;
+};
+
+// Send a message with an optional file attachment
+export const sendMessageWithAttachment = async (ticketId, contenu, file) => {
+  const formData = new FormData();
+  if (contenu) formData.append('contenu', contenu);
+  if (file) formData.append('fichier', file);
+  const response = await api.post(`/chat/${ticketId}/messages/`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
   return response.data;
 };
 

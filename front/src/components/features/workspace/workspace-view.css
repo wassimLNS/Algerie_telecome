@@ -93,7 +93,7 @@
 }
 
 .workspace-drawer-header {
-  @apply bg-[#0055A4] text-white p-4 md:p-6 flex flex-col items-start shrink-0 gap-4;
+  @apply bg-[#0055A4] text-white p-3 md:p-6 flex flex-col items-start shrink-0 gap-2 md:gap-4;
 }
 
 .workspace-drawer-title-group {
@@ -101,11 +101,11 @@
 }
 
 .workspace-drawer-title {
-  @apply text-2xl font-black tracking-tighter uppercase;
+  @apply text-lg md:text-2xl font-black tracking-tighter uppercase;
 }
 
 .workspace-drawer-badge {
-  @apply bg-white/20 text-white font-black text-[9px] uppercase mt-2 px-3 py-1 border-none shadow-none;
+  @apply bg-white/20 text-white font-black text-[9px] uppercase px-3 py-1 border-none shadow-none;
 }
 
 .workspace-drawer-actions {
@@ -113,14 +113,14 @@
 }
 
 .workspace-escalate-btn {
-  @apply text-white border border-white/20 px-6 font-black text-[10px] uppercase h-11 rounded-xl cursor-pointer;
+  @apply text-white border border-white/20 px-3 md:px-6 font-black text-[9px] md:text-[10px] uppercase h-8 md:h-11 rounded-xl cursor-pointer;
 }
 .workspace-escalate-btn:hover {
   background: rgba(255,255,255,0.1);
 }
 
 .workspace-close-btn {
-  @apply h-11 w-11 text-white rounded-full cursor-pointer;
+  @apply h-8 w-8 md:h-11 md:w-11 text-white rounded-full cursor-pointer;
 }
 .workspace-close-btn:hover {
   background: rgba(255,255,255,0.2);
@@ -133,7 +133,7 @@
 /* ─── Escalation Panel ─── */
 
 .workspace-escalation-panel {
-  @apply p-8 bg-white border-b shadow-inner shrink-0;
+  @apply p-4 md:p-8 bg-white border-b shadow-inner shrink-0;
   animation: slideInBottom 0.3s ease-out;
 }
 
@@ -155,19 +155,52 @@
 /* ─── Ticket Summary Bar ─── */
 
 .workspace-ticket-summary-bar {
-  @apply p-4 bg-white border-b grid grid-cols-2 gap-3 shadow-sm shrink-0;
+  @apply p-2 md:p-4 bg-white border-b shadow-sm shrink-0;
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (min-width: 768px) {
+  .workspace-ticket-summary-bar {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+    overflow-x: visible;
+  }
 }
 
 .workspace-summary-item {
-  @apply flex items-center gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100;
+  @apply flex items-center gap-2 md:gap-4 p-2 md:p-4 bg-slate-50 rounded-xl md:rounded-2xl border border-slate-100;
+  min-width: max-content;
+}
+
+@media (max-width: 767px) {
+  .workspace-summary-item {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    min-width: 80px;
+    padding: 0.5rem;
+  }
+  .workspace-summary-item svg {
+    width: 1rem;
+    height: 1rem;
+  }
 }
 
 .workspace-summary-item .item-label {
-  @apply text-[9px] font-black uppercase text-slate-400;
+  @apply text-[8px] md:text-[9px] font-black uppercase text-slate-400;
 }
 
 .workspace-summary-item .item-value {
-  @apply text-xs font-black text-slate-700;
+  @apply text-[10px] md:text-xs font-black text-slate-700;
+}
+
+/* ─── Description block ─── */
+.workspace-description-block {
+  @apply px-3 md:px-6 py-2 md:py-4 bg-white border-b shrink-0;
 }
 
 /* ─── Chat Container ─── */
@@ -177,7 +210,7 @@
 }
 
 .workspace-chat-wrapper {
-  @apply space-y-6 max-w-full mx-auto pb-8 p-4 md:p-6;
+  @apply space-y-4 md:space-y-6 max-w-full mx-auto pb-8 p-3 md:p-6;
 }
 
 .workspace-ai-summary {
@@ -211,7 +244,7 @@
 /* ─── Messages ─── */
 
 .workspace-messages-list {
-  @apply space-y-6;
+  @apply space-y-4 md:space-y-6;
 }
 
 .workspace-msg-group {
@@ -227,7 +260,7 @@
 }
 
 .workspace-msg-bubble {
-  @apply max-w-[85%] p-5 rounded-3xl text-sm shadow-lg transition-all;
+  @apply max-w-[85%] p-3 md:p-5 rounded-2xl md:rounded-3xl text-sm shadow-lg transition-all;
 }
 
 .workspace-msg-bubble.outgoing {
@@ -239,56 +272,56 @@
 }
 
 .msg-text {
-  @apply font-bold leading-relaxed;
+  @apply font-bold leading-relaxed text-xs md:text-sm;
 }
 
 .msg-meta {
-  @apply flex items-center justify-between mt-3 text-[9px] font-black uppercase opacity-60;
+  @apply flex items-center justify-between mt-2 md:mt-3 text-[8px] md:text-[9px] font-black uppercase opacity-60;
 }
 
 /* ─── Chat Footer ─── */
 
 .workspace-chat-footer {
-  @apply p-4 md:p-6 border-t bg-white space-y-4 shrink-0;
+  @apply p-3 md:p-6 border-t bg-white space-y-2 md:space-y-4 shrink-0;
 }
 
 .workspace-resolve-btn {
-  @apply w-full h-12 font-black text-[10px] uppercase rounded-xl bg-emerald-600 shadow-lg text-white cursor-pointer transition-colors;
+  @apply w-full h-9 md:h-12 font-black text-[9px] md:text-[10px] uppercase rounded-xl bg-emerald-600 shadow-lg text-white cursor-pointer transition-colors;
 }
 .workspace-resolve-btn:hover {
   @apply bg-emerald-700;
 }
 
 .workspace-reply-form {
-  @apply flex gap-4;
+  @apply flex gap-2 md:gap-4;
 }
 
 .workspace-reply-input {
-  @apply min-h-[60px] md:min-h-[80px] rounded-xl border-slate-200 bg-slate-50/50 transition-all text-sm;
+  @apply min-h-[50px] md:min-h-[80px] rounded-xl border-slate-200 bg-slate-50/50 transition-all text-xs md:text-sm;
 }
 .workspace-reply-input:focus {
   @apply bg-white border-[#0055A4];
 }
 
 .workspace-send-btn {
-  @apply h-auto px-4 md:w-16 bg-[#0055A4] rounded-xl text-white shadow-xl cursor-pointer transition-transform;
+  @apply h-auto px-3 md:px-4 md:w-16 bg-[#0055A4] rounded-xl text-white shadow-xl cursor-pointer transition-transform;
 }
 .workspace-send-btn:active {
   transform: scale(0.95);
 }
 
 .workspace-readonly-footer {
-  @apply p-8 border-t bg-amber-50 flex items-center gap-4 shrink-0;
+  @apply p-4 md:p-8 border-t bg-amber-50 flex items-center gap-4 shrink-0;
 }
 
 .readonly-text {
-  @apply text-[11px] font-black text-amber-800 uppercase tracking-widest;
+  @apply text-[10px] md:text-[11px] font-black text-amber-800 uppercase tracking-widest;
 }
 
 /* ─── Pieces jointes in drawer ─── */
 
 .workspace-pj-section {
-  @apply px-8 py-4 bg-white border-b shrink-0;
+  @apply px-4 md:px-8 py-3 md:py-4 bg-white border-b shrink-0;
 }
 
 .workspace-pj-label {
@@ -298,3 +331,4 @@
 .workspace-pj-item {
   @apply flex items-center gap-3 bg-slate-50 px-4 py-3 rounded-xl border border-slate-100 hover:bg-[#0055A4]/5 transition-colors cursor-pointer;
 }
+

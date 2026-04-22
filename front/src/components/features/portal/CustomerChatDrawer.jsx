@@ -5,27 +5,47 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MessageSquare, Send, AlertCircle, FileText, Tag, Paperclip, Eye, X, Loader2, Calendar, Trash2 } from 'lucide-react';
+import { MessageSquare, Send, AlertCircle, FileText, Tag, Paperclip, Eye, X, Loader2, Calendar, Trash2, ImageIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import api from '@/api/axios';
 import { deleteTicket } from '@/api/tickets';
+import { sendMessageWithAttachment } from '@/api/chat';
 
 export function CustomerChatDrawer({ ticket, messages = [], onClose, onSendMessage, onTicketDeleted }) {
   const [replyText, setReplyText] = useState('');
   const { t } = useTranslation();
-  const [previewFile, setPreviewFile] = useState(null); // { blobUrl, nom, type_mime }
+  const [previewFile, setPreviewFile] = useState(null);
   const [loadingPreview, setLoadingPreview] = useState(false);
+  const [pendingFile, setPendingFile] = useState(null);
+  const [pendingPreview, setPendingPreview] = useState(null);
+  const [sending, setSending] = useState(false);
   const messagesEndRef = useRef(null);
+  const fileInputRef = useRef(null);
 
-  // Focus and scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, ticket]);
 
-  const handleSend = () => {
-    if (!replyText.trim()) return;
-    onSendMessage(replyText);
-    setReplyText('');
+  const handleSend = async () => {
+    if (!replyText.trim() && !pendingFile) return;
+    if (pendingFile && ticket) {
+      setSending(true);
+      try {
+        const msg = await sendMessageWithAttachment(ticket.id, replyText, pendingFile);
+        // The parent will pick up via WS or we manually add
+        if (onSendMessage) onSendMessage(null, msg);
+      } catch (err) {
+        console.error('Failed to send with attachment:', err);
+      } finally {
+        setSending(false);
+        setReplyText('');
+        setPendingFile(null);
+        setPendingPreview(null);
+      }
+    } else {
+      onSendMessage(replyText);
+      setReplyText('');
+    }
   };
 
   const handleKeyDown = (e) => {
@@ -35,13 +55,30 @@ export function CustomerChatDrawer({ ticket, messages = [], onClose, onSendMessa
     }
   };
 
-  // Fetch file via authenticated axios and create a blob URL for preview
+  const handleFileSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setPendingFile(file);
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onloadend = () => setPendingPreview(reader.result);
+        reader.readAsDataURL(file);
+      } else {
+        setPendingPreview(null);
+      }
+    }
+    e.target.value = '';
+  };
+
+  const clearPendingFile = () => {
+    setPendingFile(null);
+    setPendingPreview(null);
+  };
+
   const handlePreview = async (pj) => {
     setLoadingPreview(true);
     try {
-      const response = await api.get(`/tickets/pieces-jointes/${pj.id}/download/`, {
-        responseType: 'blob',
-      });
+      const response = await api.get(`/tickets/pieces-jointes/${pj.id}/download/`, { responseType: 'blob' });
       const blobUrl = URL.createObjectURL(response.data);
       setPreviewFile({ blobUrl, nom: pj.nom_fichier, type_mime: pj.type_mime });
     } catch (err) {
@@ -58,11 +95,7 @@ export function CustomerChatDrawer({ ticket, messages = [], onClose, onSendMessa
 
   const ticketRef = ticket?.numero_ticket || (ticket?.id ? `REQ-${String(ticket.id).padStart(3, '0')}` : '');
   const isClosed = ticket?.statut === 'resolu' || ticket?.statut === 'ferme';
-
-  // Extract type service name (from TicketDetailSerializer, type_service is nested)
   const typeName = ticket?.type_service?.libelle || ticket?.type_service_libelle || '';
-
-  // Extract pieces jointes
   const piecesJointes = ticket?.pieces_jointes || [];
 
   return (
@@ -93,9 +126,8 @@ export function CustomerChatDrawer({ ticket, messages = [], onClose, onSendMessa
         <ScrollArea className="flex-1 p-6">
           <div className="space-y-5">
 
-            {/* ─── Ticket Info Card: Type + Description + Pièces Jointes ─── */}
+            {/* ─── Ticket Info Card ─── */}
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-              {/* Type de service */}
               {typeName && (
                 <div className="flex items-center gap-3 px-5 py-3 border-b border-slate-100 bg-slate-50/50">
                   <Tag className="w-4 h-4 text-[#0055A4]" />
@@ -106,7 +138,6 @@ export function CustomerChatDrawer({ ticket, messages = [], onClose, onSendMessa
                 </div>
               )}
 
-              {/* Date de création */}
               {ticket?.created_at && (
                 <div className="flex items-center gap-3 px-5 py-3 border-b border-slate-100 bg-slate-50/50">
                   <Calendar className="w-4 h-4 text-[#0055A4]" />
@@ -117,7 +148,6 @@ export function CustomerChatDrawer({ ticket, messages = [], onClose, onSendMessa
                 </div>
               )}
 
-              {/* Bouton supprimer si ticket soumis */}
               {ticket?.statut === 'soumis' && (
                 <div className="px-5 py-3 border-b border-slate-100">
                   <button
@@ -140,42 +170,37 @@ export function CustomerChatDrawer({ ticket, messages = [], onClose, onSendMessa
                 </div>
               )}
 
-              {/* Pièces jointes */}
               {piecesJointes.length > 0 && (
                 <div className="px-5 py-4">
                   <p className="text-[10px] font-black text-slate-400 uppercase mb-3 flex items-center gap-2">
                     <Paperclip className="w-3.5 h-3.5" /> {t('chat.attachment')} ({piecesJointes.length})
                   </p>
                   <div className="space-y-2">
-                    {piecesJointes.map((pj) => {
-                      const downloadUrl = `${import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api'}/tickets/pieces-jointes/${pj.id}/download/`;
-                      const isImage = pj.type_mime?.startsWith('image/');
-                      return (
-                        <button
-                          key={pj.id}
-                          type="button"
-                          onClick={() => handlePreview(pj)}
-                          className="flex items-center gap-3 bg-slate-50 px-4 py-3 rounded-xl border border-slate-100 hover:bg-[#0055A4]/5 hover:border-[#0055A4]/30 transition-colors cursor-pointer w-full text-left"
-                        >
-                          <div className="bg-[#0055A4]/10 p-2 rounded-lg">
-                            {isImage ? <Paperclip className="w-4 h-4 text-[#0055A4]" /> : <FileText className="w-4 h-4 text-[#0055A4]" />}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs font-bold text-[#0055A4] truncate underline">{pj.nom_fichier}</p>
-                            <p className="text-[9px] text-slate-400 uppercase">
-                              {pj.type_mime} • {Math.round((pj.taille_octets || 0) / 1024)} Ko
-                            </p>
-                          </div>
-                          <Eye className="w-4 h-4 text-[#0055A4] shrink-0" />
-                        </button>
-                      );
-                    })}
+                    {piecesJointes.map((pj) => (
+                      <button
+                        key={pj.id}
+                        type="button"
+                        onClick={() => handlePreview(pj)}
+                        className="flex items-center gap-3 bg-slate-50 px-4 py-3 rounded-xl border border-slate-100 hover:bg-[#0055A4]/5 hover:border-[#0055A4]/30 transition-colors cursor-pointer w-full text-left"
+                      >
+                        <div className="bg-[#0055A4]/10 p-2 rounded-lg">
+                          {pj.type_mime?.startsWith('image/') ? <Paperclip className="w-4 h-4 text-[#0055A4]" /> : <FileText className="w-4 h-4 text-[#0055A4]" />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-bold text-[#0055A4] truncate underline">{pj.nom_fichier}</p>
+                          <p className="text-[9px] text-slate-400 uppercase">
+                            {pj.type_mime} • {Math.round((pj.taille_octets || 0) / 1024)} Ko
+                          </p>
+                        </div>
+                        <Eye className="w-4 h-4 text-[#0055A4] shrink-0" />
+                      </button>
+                    ))}
                   </div>
                 </div>
               )}
             </div>
 
-            {/* ─── First message: Description as initial message ─── */}
+            {/* ─── Description as initial message ─── */}
             {ticket?.description && (
               <div className="flex justify-end">
                 <div className="max-w-[85%] p-5 rounded-3xl rounded-tr-none text-sm shadow-lg bg-[#0055A4] text-white text-left">
@@ -192,9 +217,8 @@ export function CustomerChatDrawer({ ticket, messages = [], onClose, onSendMessa
               {messages.map((m, idx) => {
                 const isCustomer = m.expediteur_role === 'client' || m.sender === 'customer';
                 const senderLabel = isCustomer ? 'Vous' : 'Expert AT';
-                const dateStr = m.date_envoi
-                  ? new Date(m.date_envoi).toLocaleString('fr-FR')
-                  : m.date || '';
+                const dateStr = m.date_envoi ? new Date(m.date_envoi).toLocaleString('fr-FR') : m.date || '';
+                const pj = m.piece_jointe_info;
 
                 return (
                   <div key={m.id || idx} className={cn("flex", isCustomer ? 'justify-end' : 'justify-start')}>
@@ -205,6 +229,22 @@ export function CustomerChatDrawer({ ticket, messages = [], onClose, onSendMessa
                         : 'bg-white border text-slate-800 rounded-tl-none'
                     )}>
                       <p className="font-bold leading-relaxed">{m.contenu || m.text}</p>
+                      {/* Inline attachment preview */}
+                      {pj && (
+                        <button
+                          onClick={() => handlePreview(pj)}
+                          className={cn(
+                            "mt-3 flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-colors cursor-pointer",
+                            isCustomer
+                              ? "bg-white/20 text-white hover:bg-white/30"
+                              : "bg-slate-50 text-[#0055A4] border border-slate-200 hover:bg-slate-100"
+                          )}
+                        >
+                          {pj.type_mime?.startsWith('image/') ? <ImageIcon className="w-4 h-4" /> : <FileText className="w-4 h-4" />}
+                          <span className="truncate max-w-[150px]">{pj.nom_fichier}</span>
+                          <Eye className="w-3 h-3 shrink-0 opacity-60" />
+                        </button>
+                      )}
                       <p className={cn(
                         "text-[9px] mt-3 font-black uppercase opacity-60",
                         isCustomer ? 'text-white' : 'text-slate-400'
@@ -231,8 +271,35 @@ export function CustomerChatDrawer({ ticket, messages = [], onClose, onSendMessa
 
         {/* Input area */}
         {!isClosed ? (
-          <div className="p-6 border-t bg-white shrink-0">
+          <div className="p-6 border-t bg-white shrink-0 space-y-3">
+            {/* Pending file preview */}
+            {pendingFile && (
+              <div className="flex items-center gap-3 bg-slate-50 px-4 py-3 rounded-xl border border-slate-200 animate-in slide-in-from-bottom-2">
+                {pendingPreview ? (
+                  <img src={pendingPreview} className="w-10 h-10 rounded-lg object-cover border" alt="Preview" />
+                ) : (
+                  <div className="w-10 h-10 rounded-lg bg-[#0055A4]/10 flex items-center justify-center">
+                    <FileText className="w-5 h-5 text-[#0055A4]" />
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-bold text-slate-700 truncate">{pendingFile.name}</p>
+                  <p className="text-[9px] text-slate-400 uppercase">{Math.round(pendingFile.size / 1024)} Ko</p>
+                </div>
+                <button onClick={clearPendingFile} className="text-slate-400 hover:text-red-500 transition-colors cursor-pointer">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            )}
             <div className="flex gap-4">
+              <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileSelect} accept="image/*,.pdf,.doc,.docx" />
+              <Button
+                variant="outline"
+                className="h-auto px-3 rounded-2xl border-slate-200 text-slate-400 hover:text-[#0055A4] hover:border-[#0055A4] cursor-pointer"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <Paperclip className="w-5 h-5" />
+              </Button>
               <Textarea
                 placeholder={t('chat.placeholder')}
                 className="min-h-[80px] rounded-2xl border-slate-200 bg-slate-50/50"
@@ -243,9 +310,9 @@ export function CustomerChatDrawer({ ticket, messages = [], onClose, onSendMessa
               <Button
                 className="h-auto w-16 bg-[#0055A4] rounded-2xl text-white"
                 onClick={handleSend}
-                disabled={!replyText.trim()}
+                disabled={(!replyText.trim() && !pendingFile) || sending}
               >
-                <Send className="w-5 h-5" />
+                {sending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
               </Button>
             </div>
           </div>
@@ -260,7 +327,7 @@ export function CustomerChatDrawer({ ticket, messages = [], onClose, onSendMessa
       </SheetContent>
     </Sheet>
 
-    {/* ─── Loading overlay ─── */}
+    {/* Loading overlay */}
     {loadingPreview && (
       <div className="fixed inset-0 z-[200] bg-black/60 flex items-center justify-center">
         <div className="bg-white rounded-2xl p-8 flex flex-col items-center gap-4 shadow-2xl">
@@ -270,10 +337,9 @@ export function CustomerChatDrawer({ ticket, messages = [], onClose, onSendMessa
       </div>
     )}
 
-    {/* ─── Preview Modal ─── */}
+    {/* Preview Modal */}
     {previewFile && (
       <div className="fixed inset-0 z-[200] bg-black/80 flex flex-col items-center justify-center" onClick={closePreview}>
-        {/* Header bar */}
         <div className="w-full max-w-4xl flex items-center justify-between px-6 py-4" onClick={(e) => e.stopPropagation()}>
           <div className="flex items-center gap-3">
             <FileText className="w-5 h-5 text-white" />
@@ -283,21 +349,11 @@ export function CustomerChatDrawer({ ticket, messages = [], onClose, onSendMessa
             <X className="w-5 h-5" />
           </button>
         </div>
-
-        {/* Content */}
         <div className="w-full max-w-4xl max-h-[80vh] flex-1 flex items-center justify-center px-6 pb-6" onClick={(e) => e.stopPropagation()}>
           {previewFile.type_mime?.startsWith('image/') ? (
-            <img
-              src={previewFile.blobUrl}
-              alt={previewFile.nom}
-              className="max-w-full max-h-[75vh] object-contain rounded-2xl shadow-2xl"
-            />
+            <img src={previewFile.blobUrl} alt={previewFile.nom} className="max-w-full max-h-[75vh] object-contain rounded-2xl shadow-2xl" />
           ) : previewFile.type_mime === 'application/pdf' ? (
-            <iframe
-              src={previewFile.blobUrl}
-              title={previewFile.nom}
-              className="w-full h-[75vh] rounded-2xl shadow-2xl bg-white"
-            />
+            <iframe src={previewFile.blobUrl} title={previewFile.nom} className="w-full h-[75vh] rounded-2xl shadow-2xl bg-white" />
           ) : (
             <div className="bg-white rounded-2xl p-12 text-center shadow-2xl">
               <FileText className="w-16 h-16 text-slate-300 mx-auto mb-4" />
