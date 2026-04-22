@@ -71,8 +71,14 @@ export default function PortalView() {
     return [...chatMessages, ...newWsMessages];
   }, [chatMessages, wsMessages]);
 
-  const handleSendMessage = async (text) => {
+  const handleSendMessage = async (text, existingMsg) => {
     if (!selectedTicket) return;
+    // If message was already created (e.g. from attachment upload), just add it
+    if (existingMsg) {
+      setChatMessages(prev => [...prev, existingMsg]);
+      return;
+    }
+    if (!text?.trim()) return;
     // Essayer d'envoyer via WebSocket d'abord (temps réel)
     if (isConnected && wsSendMessage(text)) {
       return; // Le message arrivera via onMessage du WebSocket
@@ -87,8 +93,7 @@ export default function PortalView() {
   };
 
   const handleTicketCreated = () => {
-    setActiveTab('history');
-    fetchTickets();
+    fetchTickets(); // Rafraîchit l'historique en arrière-plan sans changer d'onglet
   };
 
   return (

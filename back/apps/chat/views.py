@@ -73,7 +73,7 @@ class MessagesTicketView(APIView):
         return Response(serializer.data)
 
     def post(self, request, ticket_id):
-        """Envoyer un message dans un ticket"""
+        """Envoyer un message dans un ticket (avec fichier optionnel)"""
         ticket = self.get_ticket(ticket_id)
         if not ticket:
             return Response({'error': 'Ticket introuvable'}, status=status.HTTP_404_NOT_FOUND)
@@ -90,11 +90,31 @@ class MessagesTicketView(APIView):
         serializer = EnvoyerMessageSerializer(data=request.data)
         if serializer.is_valid():
             expediteur_type = get_expediteur_type(request.user)
+
+            # Handle file upload if present
+            piece_jointe = None
+            fichier = request.FILES.get('fichier') or serializer.validated_data.get('fichier')
+            if fichier:
+                from apps.tickets.models import PieceJointe
+                piece_jointe = PieceJointe.objects.create(
+                    ticket=ticket,
+                    uploaded_by=request.user,
+                    nom_fichier=fichier.name,
+                    type_mime=fichier.content_type or 'application/octet-stream',
+                    taille_octets=fichier.size,
+                    contenu=fichier.read(),
+                )
+
+            contenu = serializer.validated_data.get('contenu', '').strip()
+            if not contenu and piece_jointe:
+                contenu = f"📎 {piece_jointe.nom_fichier}"
+
             message = Message.objects.create(
                 ticket=ticket,
                 expediteur=request.user,
                 expediteur_type=expediteur_type,
-                contenu=serializer.validated_data['contenu'],
+                contenu=contenu,
+                piece_jointe=piece_jointe,
                 lu_par_client=(request.user.role == 'client'),
                 lu_par_agent=(request.user.role != 'client'),
             )

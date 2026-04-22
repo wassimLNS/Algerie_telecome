@@ -15,7 +15,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Search, Activity, Cpu, X, Send, CheckCircle2, ArrowUpCircle,
-  BrainCircuit, Loader2, User, Phone, Info, ShieldAlert, MapPin, FileText, Paperclip, Eye, Calendar, Mail, MailX
+  BrainCircuit, Loader2, User, Phone, Info, ShieldAlert, MapPin, FileText, Paperclip, Eye, Calendar, Mail, MailX, ChevronDown, ChevronUp
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import api from '@/api/axios';
@@ -42,6 +42,7 @@ export default function WorkspaceView({ agentRole = 'agent' }) {
   const [showHistoryPanel, setShowHistoryPanel] = useState(false);
   const [expandedHistory, setExpandedHistory] = useState(null);
   const [historyChats, setHistoryChats] = useState({});
+  const [showDetails, setShowDetails] = useState(true);
   const messagesEndRef = useRef(null);
 
   // Fetch tickets
@@ -382,70 +383,83 @@ export default function WorkspaceView({ agentRole = 'agent' }) {
               </div>
             )}
 
-            {/* Ticket Summary Bar */}
-            <div className="workspace-ticket-summary-bar">
-              <div className="workspace-summary-item">
-                <User className="w-5 h-5 text-[#0055A4]" />
-                <div>
-                  <p className="item-label">Client</p>
-                  <p className="item-value">{selectedTicket.client_nom} {selectedTicket.client_prenom}</p>
-                </div>
-              </div>
-              <div className="workspace-summary-item">
-                <Phone className="w-5 h-5 text-emerald-600" />
-                <div>
-                  <p className="item-label">Téléphone</p>
-                  <p className="item-value">{selectedTicket.client_tel || '—'}</p>
-                </div>
-              </div>
-              <div className="workspace-summary-item overflow-hidden">
-                <Info className="w-5 h-5 text-[#0055A4] shrink-0" />
-                <div className="truncate">
-                  <p className="item-label">Service</p>
-                  <p className="item-value truncate">{selectedTicket.type_service?.libelle || '—'}</p>
-                </div>
-              </div>
-              <div className="workspace-summary-item">
-                <Calendar className="w-5 h-5 text-amber-600" />
-                <div>
-                  <p className="item-label">Créé le</p>
-                  <p className="item-value">
-                    {selectedTicket.created_at
-                      ? new Date(selectedTicket.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })
-                      : '—'}
-                  </p>
-                </div>
-              </div>
-            </div>
-            {/* Description in bar */}
-            {selectedTicket.description && (
-              <div className="px-6 py-4 bg-white border-b shrink-0">
-                <div className="flex items-start gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                  <FileText className="w-5 h-5 text-[#0055A4] shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest mb-1">Description</p>
-                    <p className="text-sm font-bold text-slate-700 leading-relaxed">{selectedTicket.description}</p>
+            {/* Toggle details button */}
+            <button
+              onClick={() => setShowDetails(!showDetails)}
+              className="w-full flex items-center justify-center gap-2 py-1.5 bg-white border-b text-[9px] font-black text-slate-400 uppercase tracking-widest hover:bg-slate-50 transition-colors cursor-pointer shrink-0"
+            >
+              {showDetails ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+              {showDetails ? 'Masquer les détails' : 'Afficher les détails'}
+            </button>
+
+            {showDetails && (
+              <>
+                {/* Ticket Summary Bar */}
+                <div className="workspace-ticket-summary-bar">
+                  <div className="workspace-summary-item">
+                    <User className="w-5 h-5 text-[#0055A4]" />
+                    <div>
+                      <p className="item-label">Client</p>
+                      <p className="item-value">{selectedTicket.client_nom} {selectedTicket.client_prenom}</p>
+                    </div>
+                  </div>
+                  <div className="workspace-summary-item">
+                    <Phone className="w-5 h-5 text-emerald-600" />
+                    <div>
+                      <p className="item-label">Téléphone</p>
+                      <p className="item-value">{selectedTicket.client_tel || '—'}</p>
+                    </div>
+                  </div>
+                  <div className="workspace-summary-item overflow-hidden">
+                    <Info className="w-5 h-5 text-[#0055A4] shrink-0" />
+                    <div className="truncate">
+                      <p className="item-label">Service</p>
+                      <p className="item-value truncate">{selectedTicket.type_service?.libelle || '—'}</p>
+                    </div>
+                  </div>
+                  <div className="workspace-summary-item">
+                    <Calendar className="w-5 h-5 text-amber-600" />
+                    <div>
+                      <p className="item-label">Créé le</p>
+                      <p className="item-value">
+                        {selectedTicket.created_at
+                          ? new Date(selectedTicket.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })
+                          : '—'}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+                {/* Description */}
+                {selectedTicket.description && (
+                  <div className="workspace-description-block">
+                    <div className="flex items-start gap-3 p-3 md:p-4 bg-slate-50 rounded-xl md:rounded-2xl border border-slate-100">
+                      <FileText className="w-4 h-4 md:w-5 md:h-5 text-[#0055A4] shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-[8px] md:text-[9px] font-black uppercase text-slate-400 tracking-widest mb-1">Description</p>
+                        <p className="text-xs md:text-sm font-bold text-slate-700 leading-relaxed">{selectedTicket.description}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
-            {/* Pieces Jointes */}
-            {piecesJointes.length > 0 && (
-              <div className="workspace-pj-section">
-                <p className="workspace-pj-label">
-                  <Paperclip className="w-3.5 h-3.5" /> Pièces Jointes ({piecesJointes.length})
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {piecesJointes.map(pj => (
-                    <button key={pj.id} onClick={() => handlePreview(pj)} className="workspace-pj-item">
-                      <FileText className="w-4 h-4 text-[#0055A4]" />
-                      <span className="text-xs font-bold text-[#0055A4] underline">{pj.nom_fichier}</span>
-                      <Eye className="w-3 h-3 text-slate-400" />
-                    </button>
-                  ))}
-                </div>
-              </div>
+                {/* Pieces Jointes */}
+                {piecesJointes.length > 0 && (
+                  <div className="workspace-pj-section">
+                    <p className="workspace-pj-label">
+                      <Paperclip className="w-3.5 h-3.5" /> Pièces Jointes ({piecesJointes.length})
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {piecesJointes.map(pj => (
+                        <button key={pj.id} onClick={() => handlePreview(pj)} className="workspace-pj-item">
+                          <FileText className="w-4 h-4 text-[#0055A4]" />
+                          <span className="text-xs font-bold text-[#0055A4] underline">{pj.nom_fichier}</span>
+                          <Eye className="w-3 h-3 text-slate-400" />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
             )}
 
             {/* Chat Area */}

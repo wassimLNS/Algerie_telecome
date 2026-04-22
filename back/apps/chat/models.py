@@ -29,7 +29,14 @@ class Message(models.Model):
         related_name='messages'
     )
     expediteur_type = models.CharField(max_length=20, choices=ExpediteurType.choices)
+    expediteur_role = models.CharField(max_length=50, blank=True, null=True)
     contenu         = models.TextField()
+    piece_jointe    = models.ForeignKey(
+        'tickets.PieceJointe',
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='messages_chat'
+    )
     lu_par_client   = models.BooleanField(default=False)
     lu_par_agent    = models.BooleanField(default=False)
     via_email       = models.BooleanField(default=False)
