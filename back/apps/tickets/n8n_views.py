@@ -326,6 +326,10 @@ class WebhookReplyView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        # Filtrer les mots inappropriés
+        from apps.chat.profanity_filter import censurer_message
+        contenu, _ = censurer_message(contenu)
+
         message = Message.objects.create(
             ticket=ticket,
             expediteur=ticket.client,

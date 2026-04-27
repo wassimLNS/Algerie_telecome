@@ -109,6 +109,10 @@ class MessagesTicketView(APIView):
             if not contenu and piece_jointe:
                 contenu = f"📎 {piece_jointe.nom_fichier}"
 
+            # Filtrer les mots inappropriés
+            from apps.chat.profanity_filter import censurer_message
+            contenu, was_censored = censurer_message(contenu)
+
             message = Message.objects.create(
                 ticket=ticket,
                 expediteur=request.user,
