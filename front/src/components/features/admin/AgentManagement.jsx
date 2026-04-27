@@ -5,9 +5,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Users, Plus, ChevronRight, Trash2, X, UserCircle, Award, UserPlus, Cpu, MapPin, Shield } from 'lucide-react';
+import { Users, Plus, ChevronRight, Trash2, X, UserCircle, Award, UserPlus, Cpu, MapPin, Shield, Pencil, ToggleLeft, ToggleRight, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { createAgent, deleteAgent } from '@/api/admin';
+import { createAgent, deleteAgent, updateAgent } from '@/api/admin';
 
 const ROLE_MAP = {
   agent:            { label: 'Agent',       color: 'bg-blue-100 text-blue-800',    icon: Shield },
@@ -32,16 +32,58 @@ export function AgentManagement({ agents = [], performances: rawPerformances = [
     nom: '', prenom: '', email: '', telephone: '', role: 'agent', mot_de_passe: ''
   });
   const [formError, setFormError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
+
+  // ── Edit modal state ──
+  const [editModal, setEditModal] = useState(null); // agent object or null
+  const [editData, setEditData] = useState({});
+  const [editError, setEditError] = useState('');
+  const [editFieldErrors, setEditFieldErrors] = useState({});
+  const [editSubmitting, setEditSubmitting] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  // ── Validation helpers ──
+  const validateName = (val) => /^[A-Za-zÀ-ÿ\s\-']+$/.test(val);
+  const validatePhone = (val) => /^0[0-9]{9}$/.test(val);
+
+  const validateForm = () => {
+    const errors = {};
+    if (!formData.prenom.trim()) {
+      errors.prenom = 'Prénom requis';
+    } else if (!validateName(formData.prenom.trim())) {
+      errors.prenom = 'Lettres uniquement (pas de chiffres)';
+    }
+    if (!formData.nom.trim()) {
+      errors.nom = 'Nom requis';
+    } else if (!validateName(formData.nom.trim())) {
+      errors.nom = 'Lettres uniquement (pas de chiffres)';
+    }
+    if (!formData.email.trim()) {
+      errors.email = 'Email requis';
+    }
+    if (!formData.telephone.trim()) {
+      errors.telephone = 'Téléphone requis';
+    } else if (!validatePhone(formData.telephone.trim())) {
+      errors.telephone = '10 chiffres, commence par 0';
+    }
+    if (!formData.mot_de_passe || formData.mot_de_passe.length < 8) {
+      errors.mot_de_passe = 'Minimum 8 caractères';
+    }
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
   const handleCreate = async (e) => {
     e.preventDefault();
     setFormError('');
+    if (!validateForm()) return;
     setSubmitting(true);
     try {
       await createAgent(formData);
       setShowModal(false);
       setFormData({ nom: '', prenom: '', email: '', telephone: '', role: 'agent', mot_de_passe: '' });
+      setFieldErrors({});
       if (onRefresh) onRefresh();
     } catch (err) {
       const detail = err.response?.data;
@@ -55,13 +97,65 @@ export function AgentManagement({ agents = [], performances: rawPerformances = [
     }
   };
 
-  const handleDeactivate = async (agentId) => {
-    if (!window.confirm('Désactiver cet agent ? Il ne pourra plus se connecter.')) return;
+  const openEditModal = (agent) => {
+    setEditModal(agent);
+    setEditData({
+      nom: agent.nom || '',
+      prenom: agent.prenom || '',
+      email: agent.email || '',
+      telephone: agent.telephone || '',
+      role: agent.role || 'agent',
+      actif: agent.actif !== false,
+    });
+    setEditError('');
+    setEditFieldErrors({});
+    setConfirmDelete(false);
+  };
+
+  const validateEditForm = () => {
+    const errors = {};
+    if (!editData.prenom.trim()) errors.prenom = 'Prénom requis';
+    else if (!validateName(editData.prenom.trim())) errors.prenom = 'Lettres uniquement';
+    if (!editData.nom.trim()) errors.nom = 'Nom requis';
+    else if (!validateName(editData.nom.trim())) errors.nom = 'Lettres uniquement';
+    if (!editData.email.trim()) errors.email = 'Email requis';
+    if (editData.telephone && !validatePhone(editData.telephone.trim())) errors.telephone = '10 chiffres, commence par 0';
+    setEditFieldErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleEdit = async (e) => {
+    e.preventDefault();
+    setEditError('');
+    if (!validateEditForm()) return;
+    setEditSubmitting(true);
     try {
-      await deleteAgent(agentId);
+      await updateAgent(editModal.id, editData);
+      setEditModal(null);
       if (onRefresh) onRefresh();
     } catch (err) {
-      alert(err.response?.data?.error || 'Erreur');
+      const detail = err.response?.data;
+      if (typeof detail === 'object') {
+        setEditError(Object.values(detail).flat().join(' '));
+      } else {
+        setEditError('Erreur lors de la modification.');
+      }
+    } finally {
+      setEditSubmitting(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    setEditSubmitting(true);
+    try {
+      await deleteAgent(editModal.id);
+      setEditModal(null);
+      setConfirmDelete(false);
+      if (onRefresh) onRefresh();
+    } catch (err) {
+      setEditError(err.response?.data?.error || 'Erreur lors de la suppression.');
+    } finally {
+      setEditSubmitting(false);
     }
   };
 
@@ -153,10 +247,10 @@ export function AgentManagement({ agents = [], performances: rawPerformances = [
                               AUDIT <ChevronRight className="w-4 h-4 ml-2 inline" />
                             </button>
                             <button
-                              onClick={(e) => { e.stopPropagation(); handleDeactivate(agent.id); }}
-                              className="text-red-500 hover:bg-red-50 hover:text-red-600 rounded-xl p-2 transition-colors cursor-pointer"
+                              onClick={(e) => { e.stopPropagation(); openEditModal(agent); }}
+                              className="text-slate-500 hover:bg-slate-100 hover:text-[#0055A4] rounded-xl p-2 transition-colors cursor-pointer"
                             >
-                              <Trash2 className="w-4 h-4" />
+                              <Pencil className="w-4 h-4" />
                             </button>
                           </div>
                         </TableCell>
@@ -189,26 +283,49 @@ export function AgentManagement({ agents = [], performances: rawPerformances = [
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase text-slate-500 block">Nom Complet</label>
                 <div className="grid grid-cols-2 gap-3">
-                  <input type="text" required value={formData.prenom} placeholder="Prénom"
-                    onChange={(e) => setFormData(prev => ({ ...prev, prenom: e.target.value }))}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#0055A4]/30" />
-                  <input type="text" required value={formData.nom} placeholder="Nom"
-                    onChange={(e) => setFormData(prev => ({ ...prev, nom: e.target.value }))}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#0055A4]/30" />
+                  <div>
+                    <input type="text" value={formData.prenom} placeholder="Prénom"
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/[^A-Za-zÀ-ÿ\s\-']/g, '');
+                        setFormData(prev => ({ ...prev, prenom: val }));
+                        setFieldErrors(prev => ({ ...prev, prenom: undefined }));
+                      }}
+                      className={`w-full px-4 py-3 rounded-xl border text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#0055A4]/30 ${fieldErrors.prenom ? 'border-red-400 bg-red-50/50' : 'border-slate-200'}`} />
+                    {fieldErrors.prenom && <p className="text-[10px] font-bold text-red-500 mt-1">{fieldErrors.prenom}</p>}
+                  </div>
+                  <div>
+                    <input type="text" value={formData.nom} placeholder="Nom"
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/[^A-Za-zÀ-ÿ\s\-']/g, '');
+                        setFormData(prev => ({ ...prev, nom: val }));
+                        setFieldErrors(prev => ({ ...prev, nom: undefined }));
+                      }}
+                      className={`w-full px-4 py-3 rounded-xl border text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#0055A4]/30 ${fieldErrors.nom ? 'border-red-400 bg-red-50/50' : 'border-slate-200'}`} />
+                    {fieldErrors.nom && <p className="text-[10px] font-bold text-red-500 mt-1">{fieldErrors.nom}</p>}
+                  </div>
                 </div>
               </div>
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase text-slate-500 block">Email AT</label>
-                <input type="email" required value={formData.email} placeholder="nom@at.dz"
-                  onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                  className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#0055A4]/30" />
+                <input type="email" value={formData.email} placeholder="nom@at.dz"
+                  onChange={(e) => {
+                    setFormData(prev => ({ ...prev, email: e.target.value }));
+                    setFieldErrors(prev => ({ ...prev, email: undefined }));
+                  }}
+                  className={`w-full px-4 py-3 rounded-xl border text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#0055A4]/30 ${fieldErrors.email ? 'border-red-400 bg-red-50/50' : 'border-slate-200'}`} />
+                {fieldErrors.email && <p className="text-[10px] font-bold text-red-500 mt-1">{fieldErrors.email}</p>}
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black uppercase text-slate-500 block">Téléphone</label>
-                  <input type="tel" value={formData.telephone} placeholder="0770123456"
-                    onChange={(e) => setFormData(prev => ({ ...prev, telephone: e.target.value }))}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#0055A4]/30" />
+                  <input type="tel" value={formData.telephone} placeholder="0770123456" maxLength={10}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/[^0-9]/g, '').slice(0, 10);
+                      setFormData(prev => ({ ...prev, telephone: val }));
+                      setFieldErrors(prev => ({ ...prev, telephone: undefined }));
+                    }}
+                    className={`w-full px-4 py-3 rounded-xl border text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#0055A4]/30 ${fieldErrors.telephone ? 'border-red-400 bg-red-50/50' : 'border-slate-200'}`} />
+                  {fieldErrors.telephone && <p className="text-[10px] font-bold text-red-500 mt-1">{fieldErrors.telephone}</p>}
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] font-black uppercase text-slate-500 block">Rôle de l'Agent</label>
@@ -223,9 +340,13 @@ export function AgentManagement({ agents = [], performances: rawPerformances = [
               </div>
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase text-slate-500 block">Mot de Passe</label>
-                <input type="password" required minLength={8} value={formData.mot_de_passe} placeholder="Minimum 8 caractères"
-                  onChange={(e) => setFormData(prev => ({ ...prev, mot_de_passe: e.target.value }))}
-                  className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#0055A4]/30" />
+                <input type="password" value={formData.mot_de_passe} placeholder="Minimum 8 caractères"
+                  onChange={(e) => {
+                    setFormData(prev => ({ ...prev, mot_de_passe: e.target.value }));
+                    setFieldErrors(prev => ({ ...prev, mot_de_passe: undefined }));
+                  }}
+                  className={`w-full px-4 py-3 rounded-xl border text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#0055A4]/30 ${fieldErrors.mot_de_passe ? 'border-red-400 bg-red-50/50' : 'border-slate-200'}`} />
+                {fieldErrors.mot_de_passe && <p className="text-[10px] font-bold text-red-500 mt-1">{fieldErrors.mot_de_passe}</p>}
               </div>
               {formError && (
                 <div className="bg-red-50 border border-red-100 rounded-xl px-4 py-3 text-xs font-bold text-red-600">{formError}</div>
@@ -244,6 +365,147 @@ export function AgentManagement({ agents = [], performances: rawPerformances = [
           </div>
         </div>
       )}
+
+      {/* ─── EDIT MODAL ──────────────────────────────────────── */}
+      {editModal && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden max-h-[90vh] overflow-y-auto">
+            <div className="p-8 border-b bg-slate-50/50 flex items-center gap-4">
+              <div className="bg-[#0055A4]/10 p-3 rounded-xl">
+                <Pencil className="w-5 h-5 text-[#0055A4]" />
+              </div>
+              <div>
+                <h3 className="text-2xl font-black uppercase tracking-tighter text-[#0055A4]">Modifier Agent</h3>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{editModal.prenom} {editModal.nom}</p>
+              </div>
+              <button onClick={() => setEditModal(null)} className="ml-auto p-2 rounded-xl hover:bg-slate-100 cursor-pointer">
+                <X className="w-5 h-5 text-slate-400" />
+              </button>
+            </div>
+            <form onSubmit={handleEdit} className="p-8 space-y-4">
+              {/* Nom / Prénom */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase text-slate-500 block">Nom Complet</label>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <input type="text" value={editData.prenom} placeholder="Prénom"
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/[^A-Za-zÀ-ÿ\s\-']/g, '');
+                        setEditData(prev => ({ ...prev, prenom: val }));
+                        setEditFieldErrors(prev => ({ ...prev, prenom: undefined }));
+                      }}
+                      className={`w-full px-4 py-3 rounded-xl border text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#0055A4]/30 ${editFieldErrors.prenom ? 'border-red-400 bg-red-50/50' : 'border-slate-200'}`} />
+                    {editFieldErrors.prenom && <p className="text-[10px] font-bold text-red-500 mt-1">{editFieldErrors.prenom}</p>}
+                  </div>
+                  <div>
+                    <input type="text" value={editData.nom} placeholder="Nom"
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/[^A-Za-zÀ-ÿ\s\-']/g, '');
+                        setEditData(prev => ({ ...prev, nom: val }));
+                        setEditFieldErrors(prev => ({ ...prev, nom: undefined }));
+                      }}
+                      className={`w-full px-4 py-3 rounded-xl border text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#0055A4]/30 ${editFieldErrors.nom ? 'border-red-400 bg-red-50/50' : 'border-slate-200'}`} />
+                    {editFieldErrors.nom && <p className="text-[10px] font-bold text-red-500 mt-1">{editFieldErrors.nom}</p>}
+                  </div>
+                </div>
+              </div>
+              {/* Email */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase text-slate-500 block">Email</label>
+                <input type="email" value={editData.email} placeholder="nom@at.dz"
+                  onChange={(e) => {
+                    setEditData(prev => ({ ...prev, email: e.target.value }));
+                    setEditFieldErrors(prev => ({ ...prev, email: undefined }));
+                  }}
+                  className={`w-full px-4 py-3 rounded-xl border text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#0055A4]/30 ${editFieldErrors.email ? 'border-red-400 bg-red-50/50' : 'border-slate-200'}`} />
+                {editFieldErrors.email && <p className="text-[10px] font-bold text-red-500 mt-1">{editFieldErrors.email}</p>}
+              </div>
+              {/* Téléphone + Rôle */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase text-slate-500 block">Téléphone</label>
+                  <input type="tel" value={editData.telephone} placeholder="0770123456" maxLength={10}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/[^0-9]/g, '').slice(0, 10);
+                      setEditData(prev => ({ ...prev, telephone: val }));
+                      setEditFieldErrors(prev => ({ ...prev, telephone: undefined }));
+                    }}
+                    className={`w-full px-4 py-3 rounded-xl border text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#0055A4]/30 ${editFieldErrors.telephone ? 'border-red-400 bg-red-50/50' : 'border-slate-200'}`} />
+                  {editFieldErrors.telephone && <p className="text-[10px] font-bold text-red-500 mt-1">{editFieldErrors.telephone}</p>}
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase text-slate-500 block">Rôle</label>
+                  <select value={editData.role}
+                    onChange={(e) => setEditData(prev => ({ ...prev, role: e.target.value }))}
+                    className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#0055A4]/30 bg-white cursor-pointer">
+                    <option value="agent">Agent Support</option>
+                    <option value="agent_technique">Agent Technique National</option>
+                    <option value="agent_annexe">Agent Annexe Régionale</option>
+                  </select>
+                </div>
+              </div>
+              {/* Toggle Actif/Inactif */}
+              <div className="flex items-center justify-between p-4 rounded-xl border border-slate-200 bg-slate-50/50">
+                <div>
+                  <p className="text-sm font-black text-slate-700">Statut du compte</p>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase">{editData.actif ? 'L\'agent peut se connecter' : 'L\'agent ne peut plus se connecter'}</p>
+                </div>
+                <button type="button" onClick={() => setEditData(prev => ({ ...prev, actif: !prev.actif }))} className="cursor-pointer">
+                  {editData.actif
+                    ? <ToggleRight className="w-10 h-10 text-emerald-500" />
+                    : <ToggleLeft className="w-10 h-10 text-slate-300" />
+                  }
+                </button>
+              </div>
+
+              {editError && (
+                <div className="bg-red-50 border border-red-100 rounded-xl px-4 py-3 text-xs font-bold text-red-600">{editError}</div>
+              )}
+
+              {/* Buttons: Annuler / Enregistrer */}
+              <div className="flex gap-3 pt-2">
+                <button type="button" onClick={() => setEditModal(null)}
+                  className="flex-1 h-12 rounded-xl font-black text-xs uppercase text-slate-500 hover:bg-slate-100 transition-colors cursor-pointer">
+                  Annuler
+                </button>
+                <Button type="submit" disabled={editSubmitting}
+                  className="flex-1 h-12 rounded-xl font-black text-xs uppercase shadow-lg bg-[#0055A4] hover:bg-[#003d7a] text-white cursor-pointer">
+                  {editSubmitting ? '...' : 'Enregistrer'}
+                </Button>
+              </div>
+
+              {/* ─── ZONE DANGER: SUPPRIMER ─── */}
+              <div className="border-t border-red-100 pt-4 mt-4">
+                {!confirmDelete ? (
+                  <button type="button" onClick={() => setConfirmDelete(true)}
+                    className="w-full flex items-center justify-center gap-2 h-11 rounded-xl font-black text-xs uppercase text-red-500 border border-red-200 hover:bg-red-50 transition-colors cursor-pointer">
+                    <Trash2 className="w-4 h-4" /> Supprimer cet agent
+                  </button>
+                ) : (
+                  <div className="bg-red-50 border border-red-200 rounded-xl p-4 space-y-3">
+                    <div className="flex items-center gap-2 text-red-600">
+                      <AlertTriangle className="w-5 h-5" />
+                      <p className="text-xs font-black uppercase">Voulez-vous vraiment supprimer {editModal.prenom} {editModal.nom} ?</p>
+                    </div>
+                    <p className="text-[10px] font-bold text-red-400">Cette action est irréversible. Tous les tickets de cet agent seront désassignés.</p>
+                    <div className="flex gap-2">
+                      <button type="button" onClick={() => setConfirmDelete(false)}
+                        className="flex-1 h-10 rounded-xl font-black text-[10px] uppercase text-slate-500 hover:bg-white border border-slate-200 transition-colors cursor-pointer">
+                        Non, annuler
+                      </button>
+                      <button type="button" onClick={handleDelete} disabled={editSubmitting}
+                        className="flex-1 h-10 rounded-xl font-black text-[10px] uppercase text-white bg-red-500 hover:bg-red-600 shadow-lg transition-colors cursor-pointer">
+                        {editSubmitting ? '...' : 'Oui, supprimer'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </>
   );
 }
+
