@@ -238,13 +238,15 @@ class AgentDetailView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, agent_id):
-        """Désactiver un agent (pas de suppression physique)"""
+        """Supprimer un agent définitivement"""
         agent = self.get_agent(agent_id, request.user)
         if not agent:
             return Response({'error': 'Agent introuvable'}, status=status.HTTP_404_NOT_FOUND)
-        agent.actif = False
-        agent.save()
-        return Response({'message': 'Agent désactivé avec succès'})
+        # Désassigner les tickets ouverts de cet agent
+        from apps.tickets.models import Ticket
+        Ticket.objects.filter(agent=agent, statut__in=['ouvert', 'en_cours']).update(agent=None, attribution_auto=False)
+        agent.delete()
+        return Response({'message': 'Agent supprimé avec succès'})
 
 
 # ============================================================

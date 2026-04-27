@@ -9,6 +9,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import BasePermission
 from django.conf import settings
 from django.contrib.auth.hashers import check_password
+from django.db import models
 
 
 # ============================================================
@@ -61,11 +62,13 @@ class AuthenticateView(APIView):
     def post(self, request):
         """
         POST /api/n8n/authenticate/
-        Body: { "telephone": "0557...", "password": "..." }
-        Response: { "success": true, "client_id": "...", "nom": "...", "email": "..." }
+        Body: { "telephone": "0557...", "password": "...", "email_source": "..." }
+        Response: { "success": true, "client_id": "...", "nom": "...", "email": "...",
+                    "ticket_created": true/false, "numero_ticket": "..." }
         """
         telephone = request.data.get('telephone', '').strip()
         password = request.data.get('password', '')
+        email_source = request.data.get('email_source', '').strip()
 
         if not telephone or not password:
             return Response(
@@ -82,13 +85,93 @@ class AuthenticateView(APIView):
         if not user.check_password(password):
             return Response({'success': False, 'error': 'Mot de passe incorrect'})
 
-        return Response({
+        # Sauvegarder l'email du client pour que Check Email le reconnaisse
+        if email_source and not user.email:
+            user.email = email_source
+            user.save(update_fields=['email'])
+
+        # Vérifier s'il y a une réclamation en attente pour cet email
+        pending = EmailPending.objects.filter(email=email_source).first() if email_source else None
+
+        response_data = {
             'success': True,
             'client_id': str(user.id),
             'nom': user.nom,
             'prenom': user.prenom,
             'email': user.email or '',
-        })
+            'ticket_created': False,
+        }
+
+        if pending and pending.description:
+            # On a une description en attente → créer le ticket automatiquement !
+            from apps.tickets.models import Ticket, TypeService
+            from apps.centres.models import ParametresCentre
+            from django.utils import timezone
+            from datetime import timedelta
+
+            centre = user.centre
+            if centre:
+                type_service = None
+                if pending.type_service_code:
+                    try:
+                        type_service = TypeService.objects.get(code=pending.type_service_code, actif=True)
+                    except TypeService.DoesNotExist:
+                        pass
+                if not type_service:
+                    type_service = TypeService.objects.filter(actif=True).first()
+
+                ticket = Ticket.objects.create(
+                    client=user,
+                    centre=centre,
+                    type_service=type_service,
+                    titre=pending.titre or pending.description[:80],
+                    description=pending.description,
+                    source='email',
+                    email_source=email_source,
+                    email_actif=True,
+                    priorite='normale',
+                )
+
+                # SLA
+                try:
+                    params = ParametresCentre.objects.get(centre=centre)
+                    ticket.echeance_sla = timezone.now() + timedelta(hours=params.sla_heures_normale)
+                    ticket.save()
+                except ParametresCentre.DoesNotExist:
+                    pass
+
+                # Auto-assignation
+                try:
+                    params = ParametresCentre.objects.get(centre=centre)
+                    if params.attribution_auto_active:
+                        from apps.users.models import Role
+                        agents = Utilisateur.objects.filter(centre=centre, role=Role.AGENT, actif=True)
+                        if agents.exists():
+                            agent_min = min(
+                                agents,
+                                key=lambda a: a.tickets_agent.filter(statut__in=['ouvert', 'en_cours']).count()
+                            )
+                            ticket.agent = agent_min
+                            ticket.attribution_auto = True
+                            ticket.save()
+                except ParametresCentre.DoesNotExist:
+                    pass
+
+                # Notification
+                try:
+                    from apps.notifications.emails import notifier_ticket_ouvert
+                    notifier_ticket_ouvert(ticket)
+                except Exception as e:
+                    print(f"Erreur envoi email : {e}")
+
+                response_data['ticket_created'] = True
+                response_data['numero_ticket'] = ticket.numero_ticket
+                response_data['ticket_id'] = str(ticket.id)
+
+            # Supprimer le pending
+            pending.delete()
+
+        return Response(response_data)
 
 
 # ============================================================
@@ -191,6 +274,13 @@ class CreateTicketView(APIView):
         except ParametresCentre.DoesNotExist:
             pass
 
+        # Notification par email
+        try:
+            from apps.notifications.emails import notifier_ticket_ouvert
+            notifier_ticket_ouvert(ticket)
+        except Exception as e:
+            print(f"Erreur envoi email n8n webhook : {e}")
+
         return Response({
             'ticket_id': str(ticket.id),
             'numero_ticket': ticket.numero_ticket,
@@ -263,3 +353,50 @@ class TypesServiceListView(APIView):
         from apps.tickets.models import TypeService
         types = TypeService.objects.filter(actif=True).values('code', 'libelle', 'description')
         return Response(list(types))
+
+
+# ============================================================
+# EMAIL PENDING — Mémoire temporaire pour les réclamations
+# ============================================================
+class EmailPending(models.Model):
+    """Stocke la description d'une réclamation en attente d'authentification."""
+    email = models.EmailField(unique=True)
+    titre = models.CharField(max_length=200, blank=True, default='')
+    description = models.TextField(blank=True, default='')
+    type_service_code = models.CharField(max_length=50, blank=True, default='')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'email_pending'
+
+    def __str__(self):
+        return f"Pending: {self.email}"
+
+
+class SavePendingView(APIView):
+    """Sauvegarde une description en attente pour un email non authentifié."""
+    permission_classes = [EstN8N]
+
+    def post(self, request):
+        """
+        POST /api/n8n/save-pending/
+        Body: { "email": "...", "titre": "...", "description": "...", "type_service_code": "..." }
+        """
+        email = request.data.get('email', '').strip().lower()
+        titre = request.data.get('titre', '').strip()
+        description = request.data.get('description', '').strip()
+        type_code = request.data.get('type_service_code', '').strip()
+
+        if not email:
+            return Response({'error': 'Email requis'}, status=status.HTTP_400_BAD_REQUEST)
+
+        pending, created = EmailPending.objects.update_or_create(
+            email=email,
+            defaults={
+                'titre': titre,
+                'description': description,
+                'type_service_code': type_code,
+            }
+        )
+
+        return Response({'saved': True, 'email': email})

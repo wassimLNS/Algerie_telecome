@@ -1,7 +1,7 @@
 from django.urls import path
 from .n8n_views import (
     CheckEmailView, AuthenticateView, CreateTicketView,
-    WebhookReplyView, TypesServiceListView,
+    WebhookReplyView, TypesServiceListView, SavePendingView,
 )
 
 urlpatterns = [
@@ -10,4 +10,5 @@ urlpatterns = [
     path('create-ticket/',  CreateTicketView.as_view(),    name='n8n-create-ticket'),
     path('webhook/reply/',  WebhookReplyView.as_view(),    name='n8n-webhook-reply'),
     path('types-service/',  TypesServiceListView.as_view(), name='n8n-types-service'),
+    path('save-pending/',   SavePendingView.as_view(),     name='n8n-save-pending'),
 ]
