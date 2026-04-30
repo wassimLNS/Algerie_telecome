@@ -1,18 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Users, Plus, ChevronRight, Trash2, X, UserCircle, Award, UserPlus, Cpu, MapPin, Shield, Pencil, ToggleLeft, ToggleRight, AlertTriangle } from 'lucide-react';
+import { Users, Plus, ChevronRight, Trash2, X, UserCircle, Award, UserPlus, Cpu, MapPin, Shield, Pencil, ToggleLeft, ToggleRight, AlertTriangle, Filter, Building2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { createAgent, deleteAgent, updateAgent } from '@/api/admin';
+import api from '@/api/axios';
 
 const ROLE_MAP = {
   agent:            { label: 'Agent',       color: 'bg-blue-100 text-blue-800',    icon: Shield },
   agent_technique:  { label: 'Technicien',  color: 'bg-purple-100 text-purple-800', icon: Cpu },
   agent_annexe:     { label: 'Annexe',      color: 'bg-orange-100 text-orange-800', icon: MapPin },
+  admin:            { label: 'Manager',     color: 'bg-emerald-100 text-emerald-800', icon: Award },
 };
 
 function getStatusInfo(agent) {
@@ -24,13 +26,22 @@ function getStatusInfo(agent) {
   return { label: 'Offline', dot: 'bg-amber-500' };
 }
 
-export function AgentManagement({ agents = [], performances: rawPerformances = [], onRefresh, onAuditAgent }) {
+export function AgentManagement({ agents = [], performances: rawPerformances = [], onRefresh, onAuditAgent, readOnly = false }) {
   const { t } = useTranslation();
   const performances = Array.isArray(rawPerformances) ? rawPerformances : [];
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({
-    nom: '', prenom: '', email: '', telephone: '', role: 'agent', mot_de_passe: ''
+    nom: '', prenom: '', email: '', telephone: '', role: 'agent', mot_de_passe: '', centre: ''
   });
+  const [centres, setCentres] = useState([]);
+  const [filterRole, setFilterRole] = useState('');
+  const [filterCentre, setFilterCentre] = useState('');
+
+  useEffect(() => {
+    if (!readOnly) {
+      api.get('/centres/').then(res => setCentres(res.data)).catch(() => {});
+    }
+  }, [readOnly]);
   const [formError, setFormError] = useState('');
   const [fieldErrors, setFieldErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
@@ -69,6 +80,9 @@ export function AgentManagement({ agents = [], performances: rawPerformances = [
     }
     if (!formData.mot_de_passe || formData.mot_de_passe.length < 8) {
       errors.mot_de_passe = 'Minimum 8 caractères';
+    }
+    if (!formData.centre) {
+      errors.centre = 'Centre requis';
     }
     setFieldErrors(errors);
     return Object.keys(errors).length === 0;
@@ -160,23 +174,55 @@ export function AgentManagement({ agents = [], performances: rawPerformances = [
   };
 
   // Merge performance data with agent data
-  const agentsWithPerf = agents.map(agent => {
+  let agentsWithPerf = agents.map(agent => {
     const perf = performances.find(p => p.agent_id === String(agent.id));
     return { ...agent, perf };
   });
+
+  // Apply client-side filters (for admin_it)
+  if (filterRole) {
+    agentsWithPerf = agentsWithPerf.filter(a => a.role === filterRole);
+  }
+  if (filterCentre) {
+    agentsWithPerf = agentsWithPerf.filter(a => String(a.centre) === String(filterCentre));
+  }
 
   return (
     <>
       <div className="space-y-6">
         {/* Add button */}
-        <div className="flex justify-end px-2">
+        {/* ── Filters (admin_it only) ── */}
+        {!readOnly && (
+        <div className="flex items-center gap-3 px-2 flex-wrap">
+          <div className="flex items-center gap-2">
+            <Filter className="w-4 h-4 text-slate-400" />
+            <select value={filterRole} onChange={(e) => setFilterRole(e.target.value)}
+              className="px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold bg-white cursor-pointer focus:ring-2 focus:ring-[#0055A4]/30 focus:outline-none">
+              <option value="">Tous les rôles</option>
+              <option value="agent">Agent Support</option>
+              <option value="agent_technique">Agent Technique</option>
+              <option value="agent_annexe">Agent Annexe</option>
+              <option value="admin">Manager</option>
+            </select>
+          </div>
+          <div className="flex items-center gap-2">
+            <Building2 className="w-4 h-4 text-slate-400" />
+            <select value={filterCentre} onChange={(e) => setFilterCentre(e.target.value)}
+              className="px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold bg-white cursor-pointer focus:ring-2 focus:ring-[#0055A4]/30 focus:outline-none">
+              <option value="">Tous les centres</option>
+              {centres.map(c => <option key={c.id} value={c.id}>{c.nom}</option>)}
+            </select>
+          </div>
+          <div className="ml-auto">
           <Button
             onClick={() => setShowModal(true)}
             className="rounded-xl font-black text-[10px] uppercase h-11 px-8 shadow-xl shadow-[#0055A4]/20 bg-[#0055A4] hover:bg-[#003d7a] text-white cursor-pointer"
           >
             <UserPlus className="w-4 h-4 mr-2" /> {t('sidebar.experts')}
           </Button>
+          </div>
         </div>
+        )}
 
         {/* Table */}
         <Card className="rounded-[2rem] shadow-2xl bg-white overflow-hidden">
@@ -241,17 +287,21 @@ export function AgentManagement({ agents = [], performances: rawPerformances = [
                         </TableCell>
                         <TableCell className="text-right pr-10">
                           <div className="flex justify-end gap-2">
+                            {onAuditAgent && (
                             <button 
-                              onClick={(e) => { e.stopPropagation(); if (onAuditAgent) onAuditAgent(agent); }}
+                              onClick={(e) => { e.stopPropagation(); onAuditAgent(agent); }}
                               className="text-[11px] font-black uppercase text-[#0055A4] hover:bg-[#0055A4]/10 px-5 py-2 rounded-xl transition-colors cursor-pointer">
                               AUDIT <ChevronRight className="w-4 h-4 ml-2 inline" />
                             </button>
+                            )}
+                            {!readOnly && (
                             <button
                               onClick={(e) => { e.stopPropagation(); openEditModal(agent); }}
                               className="text-slate-500 hover:bg-slate-100 hover:text-[#0055A4] rounded-xl p-2 transition-colors cursor-pointer"
                             >
                               <Pencil className="w-4 h-4" />
                             </button>
+                            )}
                           </div>
                         </TableCell>
                       </TableRow>
@@ -333,10 +383,21 @@ export function AgentManagement({ agents = [], performances: rawPerformances = [
                     onChange={(e) => setFormData(prev => ({ ...prev, role: e.target.value }))}
                     className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#0055A4]/30 bg-white cursor-pointer">
                     <option value="agent">Agent Support</option>
-                    <option value="agent_technique">Agent Technique National</option>
-                    <option value="agent_annexe">Agent Annexe Régionale</option>
+                    <option value="agent_technique">Agent Technique</option>
+                    <option value="agent_annexe">Agent Annexe</option>
+                    <option value="admin">Manager</option>
                   </select>
                 </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase text-slate-500 block">Centre de Distribution</label>
+                <select value={formData.centre}
+                  onChange={(e) => setFormData(prev => ({ ...prev, centre: e.target.value }))}
+                  className={`w-full px-4 py-3 rounded-xl border text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#0055A4]/30 bg-white cursor-pointer ${fieldErrors.centre ? 'border-red-400 bg-red-50/50' : 'border-slate-200'}`}>
+                  <option value="">— Sélectionner un centre —</option>
+                  {centres.map(c => <option key={c.id} value={c.id}>{c.code} — {c.nom}</option>)}
+                </select>
+                {fieldErrors.centre && <p className="text-[10px] font-bold text-red-500 mt-1">{fieldErrors.centre}</p>}
               </div>
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase text-slate-500 block">Mot de Passe</label>

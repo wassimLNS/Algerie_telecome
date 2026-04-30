@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { AuthContext } from '@/contexts/AuthContext';
 import { logout as logoutAPI } from '@/api/auth';
-import { ClipboardList, LogOut, UserCircle, BarChart3, History, Cpu, MapPin, Users, LayoutDashboard, GitPullRequest, ShieldAlert } from 'lucide-react';
+import { ClipboardList, LogOut, UserCircle, BarChart3, History, Cpu, MapPin, Users, LayoutDashboard, GitPullRequest, ShieldAlert, Server } from 'lucide-react';
 import Cookies from 'js-cookie';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import './dashboard-layout.css';
@@ -63,9 +63,22 @@ const getMenuConfig = (t) => ({
         { label: t('sidebar.assignments'), icon: GitPullRequest, path: '/admin/dashboard', tab: 'assignment' },
         { label: t('sidebar.experts'), icon: Users, path: '/admin/dashboard', tab: 'agents' },
         { label: t('sidebar.audit'), icon: History, path: '/admin/dashboard', tab: 'history' },
+        { label: 'Demandes IT', icon: ClipboardList, path: '/admin/dashboard', tab: 'demandes' },
+      ]},
+    ],
+  },
+  admin_it: {
+    brand: 'AT-Admin IT',
+    brandSub: 'Gestion de la plateforme',
+    sections: [
+      { label: 'Gestion', items: [
+        { label: t('sidebar.experts'), icon: Users, path: '/admin-it/dashboard', tab: 'agents' },
       ]},
       { label: t('sidebar.security'), items: [
-        { label: t('sidebar.connections'), icon: ShieldAlert, path: '/admin/dashboard', tab: 'sessions' },
+        { label: t('sidebar.connections'), icon: ShieldAlert, path: '/admin-it/dashboard', tab: 'sessions' },
+      ]},
+      { label: 'Support', items: [
+        { label: 'Demandes Reçues', icon: ClipboardList, path: '/admin-it/dashboard', tab: 'demandes' },
       ]},
     ],
   },
@@ -96,6 +109,7 @@ export default function DashboardLayout({ children }) {
     agent_technique: t('sidebar.role_technique'),
     agent_annexe: t('sidebar.role_annexe'),
     admin: t('sidebar.role_admin'),
+    admin_it: 'Admin IT',
   }[role] || role;
 
   return (

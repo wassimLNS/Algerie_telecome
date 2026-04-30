@@ -5,7 +5,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.utils import timezone
 
-from .models import Utilisateur, HistoriqueConnexion, Role, LigneTelephonique
+from .models import Utilisateur, HistoriqueConnexion, Role, LigneTelephonique, DemandeIT, StatutDemande
 from .serializers import (
     LoginClientSerializer,
     LoginAgentSerializer,
@@ -15,8 +15,10 @@ from .serializers import (
     AgentListSerializer,
     HistoriqueConnexionSerializer,
     LigneTelephoniqueSerializer,
+    DemandeITSerializer,
+    CreerDemandeSerializer,
 )
-from .permissions import EstAdmin, EstClient, EstAgentOuPlus
+from .permissions import EstAdmin, EstAdminIT, EstClient, EstAgentOuPlus
 
 
 def get_tokens_for_user(user):
@@ -167,26 +169,45 @@ class MonProfilView(APIView):
 
 
 # ============================================================
-# GESTION DES AGENTS (admin seulement)
+# GESTION DES AGENTS (admin lecture + audit, admin_it CRUD)
 # ============================================================
 class AgentsView(APIView):
-    permission_classes = [IsAuthenticated, EstAdmin]
+    permission_classes = [IsAuthenticated]
+
+    def check_permissions(self, request):
+        super().check_permissions(request)
+        if request.user.role not in [Role.ADMIN, Role.ADMIN_IT]:
+            self.permission_denied(request)
 
     def get(self, request):
-        """Liste des agents du centre de l'admin"""
-        agents = Utilisateur.objects.filter(
-            centre=request.user.centre,
-            role__in=[Role.AGENT, Role.AGENT_TECHNIQUE, Role.AGENT_ANNEXE]
-        )
+        """Liste du staff — admin voit ses agents, admin_it voit TOUT (agents + managers)"""
+        if request.user.role == Role.ADMIN:
+            agents = Utilisateur.objects.filter(
+                centre=request.user.centre,
+                role__in=[Role.AGENT, Role.AGENT_TECHNIQUE, Role.AGENT_ANNEXE]
+            )
+        else:
+            # Admin IT voit tout le staff (agents + managers)
+            agents = Utilisateur.objects.filter(
+                role__in=[Role.AGENT, Role.AGENT_TECHNIQUE, Role.AGENT_ANNEXE, Role.ADMIN]
+            )
+            # Filtres optionnels
+            centre_id = request.query_params.get('centre')
+            if centre_id:
+                agents = agents.filter(centre_id=centre_id)
+            role_filter = request.query_params.get('role')
+            if role_filter:
+                agents = agents.filter(role=role_filter)
         serializer = AgentListSerializer(agents, many=True)
         return Response(serializer.data)
 
     def post(self, request):
-        """Créer un nouvel agent"""
+        """Créer un nouvel agent (admin_it uniquement)"""
+        if request.user.role != Role.ADMIN_IT:
+            return Response({'error': 'Seul l\'admin IT peut créer des agents'}, status=status.HTTP_403_FORBIDDEN)
         serializer = CreerAgentSerializer(data=request.data)
         if serializer.is_valid():
-            # Forcer le centre de l'admin
-            agent = serializer.save(centre=request.user.centre)
+            agent = serializer.save()
             return Response(
                 UtilisateurProfilSerializer(agent).data,
                 status=status.HTTP_201_CREATED
@@ -208,16 +229,23 @@ class ClientsView(APIView):
 
 
 class AgentDetailView(APIView):
-    permission_classes = [IsAuthenticated, EstAdmin]
+    permission_classes = [IsAuthenticated]
 
-    def get_agent(self, agent_id, admin):
-        """Récupère un agent du même centre que l'admin"""
+    def check_permissions(self, request):
+        super().check_permissions(request)
+        if request.user.role not in [Role.ADMIN, Role.ADMIN_IT]:
+            self.permission_denied(request)
+
+    def get_agent(self, agent_id, user):
+        """Récupère un agent — admin voit son centre, admin_it voit tout"""
         try:
-            return Utilisateur.objects.get(
-                id=agent_id,
-                centre=admin.centre,
-                role__in=[Role.AGENT, Role.AGENT_TECHNIQUE, Role.AGENT_ANNEXE]
-            )
+            filters = {
+                'id': agent_id,
+                'role__in': [Role.AGENT, Role.AGENT_TECHNIQUE, Role.AGENT_ANNEXE]
+            }
+            if user.role == Role.ADMIN:
+                filters['centre'] = user.centre
+            return Utilisateur.objects.get(**filters)
         except Utilisateur.DoesNotExist:
             return None
 
@@ -228,6 +256,8 @@ class AgentDetailView(APIView):
         return Response(UtilisateurProfilSerializer(agent).data)
 
     def put(self, request, agent_id):
+        if request.user.role != Role.ADMIN_IT:
+            return Response({'error': 'Seul l\'admin IT peut modifier des agents'}, status=status.HTTP_403_FORBIDDEN)
         agent = self.get_agent(agent_id, request.user)
         if not agent:
             return Response({'error': 'Agent introuvable'}, status=status.HTTP_404_NOT_FOUND)
@@ -238,11 +268,12 @@ class AgentDetailView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, agent_id):
-        """Supprimer un agent définitivement"""
+        """Supprimer un agent définitivement (admin_it uniquement)"""
+        if request.user.role != Role.ADMIN_IT:
+            return Response({'error': 'Seul l\'admin IT peut supprimer des agents'}, status=status.HTTP_403_FORBIDDEN)
         agent = self.get_agent(agent_id, request.user)
         if not agent:
             return Response({'error': 'Agent introuvable'}, status=status.HTTP_404_NOT_FOUND)
-        # Désassigner les tickets ouverts de cet agent
         from apps.tickets.models import Ticket
         Ticket.objects.filter(agent=agent, statut__in=['ouvert', 'en_cours']).update(agent=None, attribution_auto=False)
         agent.delete()
@@ -253,11 +284,11 @@ class AgentDetailView(APIView):
 # HISTORIQUE DES CONNEXIONS (admin seulement)
 # ============================================================
 class HistoriqueConnexionsView(APIView):
-    permission_classes = [IsAuthenticated, EstAdmin]
+    permission_classes = [IsAuthenticated, EstAdminIT]
 
     def get(self, request):
-        """Historique des connexions des utilisateurs (staff+clients) liés au centre"""
-        users = Utilisateur.objects.filter(centre=request.user.centre)
+        """Historique des connexions — admin_it voit TOUS les centres"""
+        users = Utilisateur.objects.all()
         
         # Filtre par rôle : 'client' ou 'staff' (tout ce qui n'est pas client)
         role_filter = request.query_params.get('role', 'all')
@@ -369,3 +400,117 @@ class HistoriqueConnexionsClientsView(APIView):
 
         serializer = HistoriqueConnexionSerializer(historique, many=True)
         return Response(serializer.data)
+
+
+# ============================================================
+# DEMANDES IT — AGENT
+# ============================================================
+class DemandesAgentView(APIView):
+    permission_classes = [IsAuthenticated, EstAgentOuPlus]
+
+    def get(self, request):
+        """Liste des demandes de l'agent connecté"""
+        demandes = DemandeIT.objects.filter(demandeur=request.user)
+        serializer = DemandeITSerializer(demandes, many=True)
+        return Response(serializer.data)
+
+    def post(self, request):
+        """Créer une nouvelle demande"""
+        serializer = CreerDemandeSerializer(data=request.data)
+        if serializer.is_valid():
+            # Si c'est un admin, statut directement 'approuvee'
+            statut = StatutDemande.APPROUVEE if request.user.role == Role.ADMIN else StatutDemande.EN_ATTENTE
+            demande = serializer.save(
+                demandeur=request.user,
+                centre=request.user.centre,
+                statut=statut,
+                approuve_par=request.user if request.user.role == Role.ADMIN else None,
+            )
+            return Response(DemandeITSerializer(demande).data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+# ============================================================
+# DEMANDES IT — ADMIN CENTRE
+# ============================================================
+class DemandesAdminView(APIView):
+    permission_classes = [IsAuthenticated, EstAdmin]
+
+    def get(self, request):
+        """Demandes des agents de son centre + ses propres demandes"""
+        demandes = DemandeIT.objects.filter(centre=request.user.centre)
+        serializer = DemandeITSerializer(demandes, many=True)
+        return Response(serializer.data)
+
+    def put(self, request, demande_id):
+        """Approuver ou refuser une demande"""
+        try:
+            demande = DemandeIT.objects.get(id=demande_id, centre=request.user.centre)
+        except DemandeIT.DoesNotExist:
+            return Response({'error': 'Demande introuvable'}, status=status.HTTP_404_NOT_FOUND)
+
+        if demande.statut != StatutDemande.EN_ATTENTE:
+            return Response({'error': 'Cette demande a déjà été traitée'}, status=status.HTTP_400_BAD_REQUEST)
+
+        action = request.data.get('action')  # 'approuver' ou 'refuser'
+        commentaire = request.data.get('commentaire', '')
+
+        if action == 'approuver':
+            demande.statut = StatutDemande.APPROUVEE
+            demande.approuve_par = request.user
+            demande.reponse_admin = commentaire
+            demande.save()
+        elif action == 'refuser':
+            demande.statut = StatutDemande.REFUSEE
+            demande.approuve_par = request.user
+            demande.reponse_admin = commentaire
+            demande.save()
+        else:
+            return Response({'error': 'Action invalide (approuver/refuser)'}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(DemandeITSerializer(demande).data)
+
+
+# ============================================================
+# DEMANDES IT — ADMIN IT
+# ============================================================
+class DemandesITView(APIView):
+    permission_classes = [IsAuthenticated, EstAdminIT]
+
+    def get(self, request):
+        """Toutes les demandes approuvées (de tous les centres)"""
+        statut_filter = request.query_params.get('statut', 'approuvee')
+        if statut_filter == 'all':
+            demandes = DemandeIT.objects.all()
+        else:
+            demandes = DemandeIT.objects.filter(statut=statut_filter)
+        serializer = DemandeITSerializer(demandes, many=True)
+        return Response(serializer.data)
+
+    def put(self, request, demande_id):
+        """Traiter ou refuser une demande approuvée"""
+        try:
+            demande = DemandeIT.objects.get(id=demande_id)
+        except DemandeIT.DoesNotExist:
+            return Response({'error': 'Demande introuvable'}, status=status.HTTP_404_NOT_FOUND)
+
+        if demande.statut != StatutDemande.APPROUVEE:
+            return Response({'error': 'Seules les demandes approuvées peuvent être traitées'}, status=status.HTTP_400_BAD_REQUEST)
+
+        action = request.data.get('action')  # 'traiter' ou 'refuser'
+        commentaire = request.data.get('commentaire', '')
+
+        if action == 'traiter':
+            demande.statut = StatutDemande.TRAITEE
+            demande.traite_par = request.user
+            demande.reponse_it = commentaire
+            demande.save()
+        elif action == 'refuser':
+            demande.statut = StatutDemande.REFUSEE_IT
+            demande.traite_par = request.user
+            demande.reponse_it = commentaire
+            demande.save()
+        else:
+            return Response({'error': 'Action invalide (traiter/refuser)'}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(DemandeITSerializer(demande).data)

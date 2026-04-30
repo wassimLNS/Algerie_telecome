@@ -17,6 +17,7 @@ import WorkspaceView from './pages/agent/WorkspaceView';
 
 // Pages - Admin
 import AdminView from './pages/admin/AdminView';
+import AdminITView from './pages/admin-it/AdminITView';
 
 // Pages - Errors
 import NotFound from './pages/errors/NotFound';
@@ -71,6 +72,15 @@ function App() {
           <RoleRoute allowedRoles={['admin']}>
             <DashboardLayout>
               <AdminView />
+            </DashboardLayout>
+          </RoleRoute>
+        } />
+
+        {/* Admin IT Routes */}
+        <Route path="/admin-it/dashboard" element={
+          <RoleRoute allowedRoles={['admin_it']}>
+            <DashboardLayout>
+              <AdminITView />
             </DashboardLayout>
           </RoleRoute>
         } />

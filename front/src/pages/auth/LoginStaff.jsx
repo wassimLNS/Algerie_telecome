@@ -41,6 +41,7 @@ export default function LoginStaff() {
         agent_technique: '/technique/dashboard',
         agent_annexe: '/annexe/dashboard',
         admin: '/admin/dashboard',
+        admin_it: '/admin-it/dashboard',
       };
       navigate(roleRoutes[user.role] || '/staff');
     } catch (err) {

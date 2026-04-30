@@ -7,6 +7,7 @@ import { getMessages, sendMessage as sendMessageAPI, getAISummary } from '@/api/
 import { useWebSocket } from '@/hooks/useWebSocket';
 import { AgentDashboard } from '@/components/features/workspace/AgentDashboard';
 import { ActiveQueue } from '@/components/features/workspace/ActiveQueue';
+import DemandesAgent from '@/components/features/workspace/DemandesAgent';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -246,6 +247,7 @@ export default function WorkspaceView({ agentRole = 'agent' }) {
           <Button variant={activeTab === 'dashboard' ? 'default' : 'outline'} className="workspace-nav-btn" onClick={() => setActiveTab('dashboard')}>{t('sidebar.performance')}</Button>
           <Button variant={activeTab === 'tickets' ? 'default' : 'outline'} className="workspace-nav-btn" onClick={() => setActiveTab('tickets')}>{t('sidebar.tickets')}</Button>
           <Button variant={activeTab === 'history' ? 'default' : 'outline'} className="workspace-nav-btn" onClick={() => setActiveTab('history')}>{t('sidebar.history')}</Button>
+          <Button variant={activeTab === 'demandes' ? 'default' : 'outline'} className="workspace-nav-btn" onClick={() => setActiveTab('demandes')}>Demandes IT</Button>
         </div>
       </div>
 
@@ -253,6 +255,8 @@ export default function WorkspaceView({ agentRole = 'agent' }) {
       <div className="workspace-main-content">
         {activeTab === 'dashboard' ? (
           <AgentDashboard tickets={tickets} user={user} />
+        ) : activeTab === 'demandes' ? (
+          <DemandesAgent />
         ) : (
           <ActiveQueue tickets={filteredTickets} onOpenTicket={handleOpenTicket} isHistory={activeTab === 'history'} />
         )}
