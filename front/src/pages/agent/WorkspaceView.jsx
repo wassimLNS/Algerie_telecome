@@ -25,7 +25,7 @@ import '@/components/features/workspace/workspace-view.css';
 export default function WorkspaceView({ agentRole = 'agent' }) {
   const { user } = useContext(AuthContext);
   const { t } = useTranslation();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get('tab') || 'dashboard';
   const [searchTerm, setSearchTerm] = useState('');
   const [tickets, setTickets] = useState([]);
@@ -244,10 +244,10 @@ export default function WorkspaceView({ agentRole = 'agent' }) {
             <Search className="workspace-search-icon" />
             <Input placeholder={t('portal.search')} className="workspace-search-input" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
           </div>
-          <Button variant={activeTab === 'dashboard' ? 'default' : 'outline'} className="workspace-nav-btn" onClick={() => setActiveTab('dashboard')}>{t('sidebar.performance')}</Button>
-          <Button variant={activeTab === 'tickets' ? 'default' : 'outline'} className="workspace-nav-btn" onClick={() => setActiveTab('tickets')}>{t('sidebar.tickets')}</Button>
-          <Button variant={activeTab === 'history' ? 'default' : 'outline'} className="workspace-nav-btn" onClick={() => setActiveTab('history')}>{t('sidebar.history')}</Button>
-          <Button variant={activeTab === 'demandes' ? 'default' : 'outline'} className="workspace-nav-btn" onClick={() => setActiveTab('demandes')}>Demandes IT</Button>
+          <Button variant={activeTab === 'dashboard' ? 'default' : 'outline'} className="workspace-nav-btn" onClick={() => setSearchParams({ tab: 'dashboard' })}>{t('sidebar.performance')}</Button>
+          <Button variant={activeTab === 'tickets' ? 'default' : 'outline'} className="workspace-nav-btn" onClick={() => setSearchParams({ tab: 'tickets' })}>{t('sidebar.tickets')}</Button>
+          <Button variant={activeTab === 'history' ? 'default' : 'outline'} className="workspace-nav-btn" onClick={() => setSearchParams({ tab: 'history' })}>{t('sidebar.history')}</Button>
+          <Button variant={activeTab === 'demandes' ? 'default' : 'outline'} className="workspace-nav-btn" onClick={() => setSearchParams({ tab: 'demandes' })}>Demandes IT</Button>
         </div>
       </div>
 
