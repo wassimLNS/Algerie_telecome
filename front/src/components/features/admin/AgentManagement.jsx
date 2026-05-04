@@ -96,7 +96,7 @@ export function AgentManagement({ agents = [], performances: rawPerformances = [
     try {
       await createAgent(formData);
       setShowModal(false);
-      setFormData({ nom: '', prenom: '', email: '', telephone: '', role: 'agent', mot_de_passe: '' });
+      setFormData({ nom: '', prenom: '', email: '', telephone: '', role: 'agent', mot_de_passe: '', centre: '' });
       setFieldErrors({});
       if (onRefresh) onRefresh();
     } catch (err) {
