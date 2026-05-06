@@ -119,6 +119,7 @@ export function AgentManagement({ agents = [], performances: rawPerformances = [
       email: agent.email || '',
       telephone: agent.telephone || '',
       role: agent.role || 'agent',
+      centre: agent.centre || '',
       actif: agent.actif !== false,
     });
     setEditError('');
@@ -134,6 +135,7 @@ export function AgentManagement({ agents = [], performances: rawPerformances = [
     else if (!validateName(editData.nom.trim())) errors.nom = 'Lettres uniquement';
     if (!editData.email.trim()) errors.email = 'Email requis';
     if (editData.telephone && !validatePhone(editData.telephone.trim())) errors.telephone = '10 chiffres, commence par 0';
+    if (!editData.centre) errors.centre = 'Centre requis';
     setEditFieldErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -503,6 +505,21 @@ export function AgentManagement({ agents = [], performances: rawPerformances = [
                     <option value="agent_technique">Agent Technique National</option>
                     <option value="agent_annexe">Agent Annexe Régionale</option>
                   </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase text-slate-500 block">Centre</label>
+                  <select value={editData.centre}
+                    onChange={(e) => {
+                      setEditData(prev => ({ ...prev, centre: e.target.value }));
+                      setEditFieldErrors(prev => ({ ...prev, centre: undefined }));
+                    }}
+                    className={`w-full px-4 py-3 rounded-xl border text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#0055A4]/30 bg-white cursor-pointer ${editFieldErrors.centre ? 'border-red-400 bg-red-50/50' : 'border-slate-200'}`}>
+                    <option value="">Sélectionner un centre</option>
+                    {centres.map(c => (
+                      <option key={c.id} value={c.id}>{c.nom} ({c.wilaya})</option>
+                    ))}
+                  </select>
+                  {editFieldErrors.centre && <p className="text-[10px] font-bold text-red-500 mt-1">{editFieldErrors.centre}</p>}
                 </div>
               </div>
               {/* Toggle Actif/Inactif */}
