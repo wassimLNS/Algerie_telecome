@@ -102,9 +102,26 @@ export function DemandesIT() {
                       <p className="text-xs text-slate-500 mb-1">{d.description}</p>
                       {d.reponse_admin && <p className="text-xs text-blue-600 font-semibold">💬 Admin : {d.reponse_admin}</p>}
                       {d.reponse_it && <p className="text-xs text-emerald-600 mt-1 font-semibold">💻 IT : {d.reponse_it}</p>}
-                      <p className="text-[10px] text-slate-300 mt-2 font-bold">
-                        Par {d.demandeur_nom} — {new Date(d.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                      </p>
+                      <div className="mt-3 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                        <p className="text-[10px] text-slate-500 font-bold flex justify-between">
+                          <span>
+                            <span className="text-slate-400 uppercase tracking-wider">Demandeur :</span> <span className="text-[#0055A4]">{d.demandeur_nom}</span>
+                          </span>
+                          {d.centre_nom && (
+                            <span>
+                              <span className="text-slate-400 uppercase tracking-wider">Centre :</span> <span className="text-slate-700 bg-slate-200 px-2 py-0.5 rounded-full ml-1">📍 {d.centre_nom}</span>
+                            </span>
+                          )}
+                        </p>
+                        {d.approuve_par_nom && (
+                          <p className="text-[10px] text-slate-500 font-bold mt-1">
+                            <span className="text-slate-400 uppercase tracking-wider">Validée par :</span> <span className="text-emerald-600">{d.approuve_par_nom}</span>
+                          </p>
+                        )}
+                        <p className="text-[9px] text-slate-400 mt-1 font-bold">
+                          🕒 {new Date(d.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                      </div>
                     </div>
                     {d.statut === 'approuvee' && (
                       <div className="flex gap-2 shrink-0">
