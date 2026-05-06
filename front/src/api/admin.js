@@ -73,6 +73,28 @@ export const getCentreParams = async () => {
   return response.data;
 };
 
+// ─── Gestion des Centres (Admin / Admin IT) ─────────────────
+
+export const getCentres = async () => {
+  const response = await api.get('/centres/');
+  return response.data;
+};
+
+export const createCentre = async (data) => {
+  const response = await api.post('/centres/', data);
+  return response.data;
+};
+
+export const updateCentre = async (id, data) => {
+  const response = await api.put(`/centres/${id}/`, data);
+  return response.data;
+};
+
+export const deleteCentre = async (id) => {
+  const response = await api.delete(`/centres/${id}/`);
+  return response.data;
+};
+
 // ─── Exports ────────────────────────────────────────────────
 
 export const exportPDF = async () => {

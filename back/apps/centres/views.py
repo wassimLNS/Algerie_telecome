@@ -5,7 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 
 from .models import CentreDistribution, ParametresCentre
 from .serializers import CentreDistributionSerializer, ParametresCentreSerializer
-from apps.users.permissions import EstAdmin
+from apps.users.permissions import EstAdmin, EstAdminOuAdminIT
 
 
 # ============================================================
@@ -26,8 +26,8 @@ class CentresView(APIView):
         return Response(serializer.data)
 
     def post(self, request):
-        """Créer un nouveau centre (admin uniquement)"""
-        if request.user.role != 'admin':
+        """Créer un nouveau centre (admin et admin_it)"""
+        if request.user.role not in ['admin', 'admin_it']:
             return Response({'error': 'Non autorisé'}, status=status.HTTP_403_FORBIDDEN)
         serializer = CentreDistributionSerializer(data=request.data)
         if serializer.is_valid():
@@ -41,7 +41,7 @@ class CentresView(APIView):
 # DÉTAIL D'UN CENTRE
 # ============================================================
 class CentreDetailView(APIView):
-    permission_classes = [IsAuthenticated, EstAdmin]
+    permission_classes = [IsAuthenticated, EstAdminOuAdminIT]
 
     def get_centre(self, centre_id):
         try:
