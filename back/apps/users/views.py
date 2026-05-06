@@ -286,11 +286,14 @@ class AgentDetailView(APIView):
 # HISTORIQUE DES CONNEXIONS (admin seulement)
 # ============================================================
 class HistoriqueConnexionsView(APIView):
-    permission_classes = [IsAuthenticated, EstAdminIT]
+    permission_classes = [IsAuthenticated, EstAdminOuAdminIT]
 
     def get(self, request):
-        """Historique des connexions — admin_it voit TOUS les centres"""
-        users = Utilisateur.objects.all()
+        """Historique des connexions — admin_it voit TOUS les centres, admin voit son centre"""
+        if request.user.role == 'admin':
+            users = Utilisateur.objects.filter(centre=request.user.centre)
+        else:
+            users = Utilisateur.objects.all()
         
         # Filtre par rôle : 'client' ou 'staff' (tout ce qui n'est pas client)
         role_filter = request.query_params.get('role', 'all')
