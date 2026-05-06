@@ -8,7 +8,7 @@ from datetime import timedelta
 
 from apps.tickets.models import Ticket, TypeService
 from apps.users.models import Utilisateur
-from apps.users.permissions import EstAdmin
+from apps.users.permissions import EstAdmin, EstAdminOuAdminIT
 
 
 # ============================================================
@@ -96,23 +96,24 @@ class StatsGeneralesView(APIView):
 # PERFORMANCES DES AGENTS (admin)
 # ============================================================
 class PerformancesAgentsView(APIView):
-    permission_classes = [IsAuthenticated, EstAdmin]
+    permission_classes = [IsAuthenticated, EstAdminOuAdminIT]
 
     def get(self, request):
-        centre = request.user.centre
-        if not centre:
-            return Response({'error': 'Pas de centre associé'})
-
         service = request.query_params.get('service')
         agent_id = request.query_params.get('agent_id')
         start_date = request.query_params.get('start_date')
         end_date = request.query_params.get('end_date')
 
         agents = Utilisateur.objects.filter(
-            centre=centre,
             role__in=['agent', 'agent_technique', 'agent_annexe'],
             actif=True
         )
+
+        if request.user.role == 'admin':
+            centre = request.user.centre
+            if not centre:
+                return Response({'error': 'Pas de centre associé'})
+            agents = agents.filter(centre=centre)
         if agent_id:
             agents = agents.filter(id=agent_id)
 

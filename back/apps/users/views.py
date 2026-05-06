@@ -241,9 +241,11 @@ class AgentDetailView(APIView):
         try:
             filters = {
                 'id': agent_id,
-                'role__in': [Role.AGENT, Role.AGENT_TECHNIQUE, Role.AGENT_ANNEXE]
             }
-            if user.role == Role.ADMIN:
+            if user.role == Role.ADMIN_IT:
+                filters['role__in'] = [Role.AGENT, Role.AGENT_TECHNIQUE, Role.AGENT_ANNEXE, Role.ADMIN]
+            else:
+                filters['role__in'] = [Role.AGENT, Role.AGENT_TECHNIQUE, Role.AGENT_ANNEXE]
                 filters['centre'] = user.centre
             return Utilisateur.objects.get(**filters)
         except Utilisateur.DoesNotExist:

@@ -131,6 +131,17 @@ class CreerAgentSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Cet email est déjà utilisé.")
         return value
 
+    def validate(self, data):
+        role = data.get('role')
+        centre = data.get('centre')
+        
+        if role == Role.ADMIN and centre:
+            # Check if there's already an active manager for this center
+            if Utilisateur.objects.filter(role=Role.ADMIN, centre=centre, actif=True).exists():
+                raise serializers.ValidationError({"role": "Ce centre a déjà un manager actif."})
+                
+        return data
+
     def create(self, validated_data):
         mot_de_passe = validated_data.pop('mot_de_passe')
         user = Utilisateur(**validated_data)
@@ -158,6 +169,21 @@ class ModifierAgentSerializer(serializers.ModelSerializer):
         if value not in roles_autorises:
             raise serializers.ValidationError("Rôle invalide.")
         return value
+
+    def validate(self, data):
+        role = data.get('role', getattr(self.instance, 'role', None))
+        centre = data.get('centre', getattr(self.instance, 'centre', None))
+        actif = data.get('actif', getattr(self.instance, 'actif', True))
+
+        if role == Role.ADMIN and centre and actif:
+            # Check if there's already an active manager for this center
+            query = Utilisateur.objects.filter(role=Role.ADMIN, centre=centre, actif=True)
+            if self.instance:
+                query = query.exclude(pk=self.instance.pk)
+            if query.exists():
+                raise serializers.ValidationError({"role": "Ce centre a déjà un manager actif."})
+                
+        return data
 
 
 # ============================================================
