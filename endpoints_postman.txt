@@ -57,7 +57,6 @@ Body:
     "email": "sofiane.meziani@at.dz",
     "telephone": "0770123456",
     "role": "agent",
-    "centre": 1,
     "mot_de_passe": "agent123456"
 }
 
@@ -293,98 +292,6 @@ GET    http://127.0.0.1:8000/api/rapports/export/pdf/
 GET    http://127.0.0.1:8000/api/rapports/export/excel/
 
 
-------------------------------------------
- 📨 DEMANDES IT — http://127.0.0.1:8000/api/users/demandes/
-------------------------------------------
-
-GET    http://127.0.0.1:8000/api/users/demandes/        (token AGENT — Mes demandes)
-
-POST   http://127.0.0.1:8000/api/users/demandes/        (token AGENT — Créer demande)
-Body:
-{
-    "type_demande": "equipement",
-    "sujet": "Besoin d'un clavier",
-    "description": "Mon clavier ne fonctionne plus, j'ai besoin d'un remplacement."
-}
-
-----------------------------------------------------------------
-
-GET    http://127.0.0.1:8000/api/users/demandes/admin/   (token ADMIN — Demandes du centre)
-
-PUT    http://127.0.0.1:8000/api/users/demandes/admin/{id}/  (token ADMIN — Approuver/Refuser)
-Body:
-{
-    "statut": "approuve"
-}
-
-----------------------------------------------------------------
-
-GET    http://127.0.0.1:8000/api/users/demandes/it/      (token ADMIN_IT — Toutes les demandes approuvées)
-
-PUT    http://127.0.0.1:8000/api/users/demandes/it/{id}/  (token ADMIN_IT — Traiter demande)
-Body:
-{
-    "statut": "traite"
-}
-
-
-------------------------------------------
- 🤖 N8N — http://127.0.0.1:8000/api/n8n/
-------------------------------------------
-Header: X-N8N-API-Key: at-n8n-secret-2026
-
-POST   http://127.0.0.1:8000/api/n8n/check-email/
-Body:
-{
-    "email": "client@gmail.com"
-}
-
-----------------------------------------------------------------
-
-POST   http://127.0.0.1:8000/api/n8n/authenticate/
-Body:
-{
-    "telephone": "0557514332",
-    "password": "client123",
-    "email_source": "client@gmail.com"
-}
-
-----------------------------------------------------------------
-
-POST   http://127.0.0.1:8000/api/n8n/create-ticket/
-Body:
-{
-    "client_id": "uuid-du-client",
-    "email_source": "client@gmail.com",
-    "titre": "Ping élevé le soir",
-    "description": "Mon ping est trop élevé dès 19h.",
-    "type_service_code": "PING_ELEVE"
-}
-
-----------------------------------------------------------------
-
-POST   http://127.0.0.1:8000/api/n8n/webhook/reply/
-Body:
-{
-    "ticket_id": "uuid-du-ticket",
-    "contenu": "Message du client via email",
-    "email_source": "client@gmail.com"
-}
-
-----------------------------------------------------------------
-
-GET    http://127.0.0.1:8000/api/n8n/types-service/
-
-POST   http://127.0.0.1:8000/api/n8n/save-pending/
-Body:
-{
-    "email": "client@gmail.com",
-    "titre": "Problème de connexion",
-    "description": "Ma connexion est coupée depuis ce matin.",
-    "type_service_code": "PAS_INTERNET"
-}
-
-
 -------------------------------------------------------------------------------------------------
  📝 NOTES IMPORTANTES
 ------------------------------------------
@@ -405,7 +312,7 @@ Body:
    resolu       → ferme
 
 4. Roles disponibles pour creer un agent :
-   "agent", "agent_technique", "agent_annexe", "admin"
+   "agent", "agent_technique", "agent_annexe"
 
 5. Pieces jointes → utiliser form-data (pas JSON)
    Key: fichier | Value: [fichier]

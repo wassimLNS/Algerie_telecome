@@ -12,26 +12,20 @@ from apps.users.permissions import EstAdmin
 # LISTE ET CRÉATION DES CENTRES
 # ============================================================
 class CentresView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def check_permissions(self, request):
-        super().check_permissions(request)
-        if request.user.role not in ['admin', 'admin_it']:
-            self.permission_denied(request)
+    permission_classes = [IsAuthenticated, EstAdmin]
 
     def get(self, request):
-        """Liste tous les centres (admin + admin_it)"""
+        """Liste tous les centres"""
         centres = CentreDistribution.objects.filter(actif=True)
         serializer = CentreDistributionSerializer(centres, many=True)
         return Response(serializer.data)
 
     def post(self, request):
-        """Créer un nouveau centre (admin uniquement)"""
-        if request.user.role != 'admin':
-            return Response({'error': 'Non autorisé'}, status=status.HTTP_403_FORBIDDEN)
+        """Créer un nouveau centre"""
         serializer = CentreDistributionSerializer(data=request.data)
         if serializer.is_valid():
             centre = serializer.save()
+            # Créer les paramètres par défaut pour ce centre
             ParametresCentre.objects.create(centre=centre)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

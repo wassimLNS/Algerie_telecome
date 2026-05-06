@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext, useMemo, useRef } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { AuthContext } from '@/contexts/AuthContext';
 import { getAgentTickets, getAgentTicketDetail, updateTicketStatus, escalateTicket, getEscalatedTickets, getTicketClientHistory, toggleEmailRelay } from '@/api/tickets';
@@ -25,8 +25,15 @@ import '@/components/features/workspace/workspace-view.css';
 export default function WorkspaceView({ agentRole = 'agent' }) {
   const { user } = useContext(AuthContext);
   const { t } = useTranslation();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const searchParams = new URLSearchParams(location.search);
   const activeTab = searchParams.get('tab') || 'dashboard';
+  
+  const handleTabChange = (tab) => {
+    navigate(`${location.pathname}?tab=${tab}`);
+  };
+
   const [searchTerm, setSearchTerm] = useState('');
   const [tickets, setTickets] = useState([]);
   const [selectedTicket, setSelectedTicket] = useState(null);
@@ -244,10 +251,10 @@ export default function WorkspaceView({ agentRole = 'agent' }) {
             <Search className="workspace-search-icon" />
             <Input placeholder={t('portal.search')} className="workspace-search-input" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
           </div>
-          <Button variant={activeTab === 'dashboard' ? 'default' : 'outline'} className="workspace-nav-btn" onClick={() => setSearchParams({ tab: 'dashboard' })}>{t('sidebar.performance')}</Button>
-          <Button variant={activeTab === 'tickets' ? 'default' : 'outline'} className="workspace-nav-btn" onClick={() => setSearchParams({ tab: 'tickets' })}>{t('sidebar.tickets')}</Button>
-          <Button variant={activeTab === 'history' ? 'default' : 'outline'} className="workspace-nav-btn" onClick={() => setSearchParams({ tab: 'history' })}>{t('sidebar.history')}</Button>
-          <Button variant={activeTab === 'demandes' ? 'default' : 'outline'} className="workspace-nav-btn" onClick={() => setSearchParams({ tab: 'demandes' })}>Demandes IT</Button>
+          <Button variant={activeTab === 'dashboard' ? 'default' : 'outline'} className="workspace-nav-btn" onClick={() => handleTabChange('dashboard')}>{t('sidebar.performance')}</Button>
+          <Button variant={activeTab === 'tickets' ? 'default' : 'outline'} className="workspace-nav-btn" onClick={() => handleTabChange('tickets')}>{t('sidebar.tickets')}</Button>
+          <Button variant={activeTab === 'history' ? 'default' : 'outline'} className="workspace-nav-btn" onClick={() => handleTabChange('history')}>{t('sidebar.history')}</Button>
+          <Button variant={activeTab === 'demandes' ? 'default' : 'outline'} className="workspace-nav-btn" onClick={() => handleTabChange('demandes')}>Demandes IT</Button>
         </div>
       </div>
 

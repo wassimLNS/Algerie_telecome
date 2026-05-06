@@ -62,7 +62,6 @@ class Utilisateur(AbstractBaseUser, PermissionsMixin):
     # Agents/Admin → email + mot de passe
     telephone = models.CharField(max_length=20, unique=True, null=True, blank=True)
     email     = models.EmailField(unique=True, null=True, blank=True)
-    email_n8n = models.EmailField(null=True, blank=True, help_text="Email source n8n (pour identifier le client par email)")
 
     # --- Identité ---
     nom            = models.CharField(max_length=100)
