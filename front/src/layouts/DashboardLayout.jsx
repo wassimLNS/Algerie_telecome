@@ -76,6 +76,7 @@ const getMenuConfig = (t) => ({
     sections: [
       { label: 'Gestion', items: [
         { label: t('sidebar.experts'), icon: Users, path: '/admin-it/dashboard', tab: 'agents' },
+        { label: 'Centres', icon: MapPin, path: '/admin-it/dashboard', tab: 'centres' },
       ]},
       { label: t('sidebar.security'), items: [
         { label: t('sidebar.connections'), icon: ShieldAlert, path: '/admin-it/dashboard', tab: 'sessions' },
