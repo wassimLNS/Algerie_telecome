@@ -155,7 +155,7 @@ class AuthenticateView(APIView):
                         if agents.exists():
                             agent_min = min(
                                 agents,
-                                key=lambda a: a.tickets_agent.filter(statut__in=['ouvert', 'en_cours']).count()
+                                key=lambda a: a.tickets_agent.exclude(statut__in=['ferme', 'rejete']).count()
                             )
                             ticket.agent = agent_min
                             ticket.attribution_auto = True
@@ -272,7 +272,7 @@ class CreateTicketView(APIView):
                 if agents.exists():
                     agent_min = min(
                         agents,
-                        key=lambda a: a.tickets_agent.filter(statut__in=['ouvert', 'en_cours']).count()
+                        key=lambda a: a.tickets_agent.exclude(statut__in=['ferme', 'rejete']).count()
                     )
                     ticket.agent = agent_min
                     ticket.attribution_auto = True

@@ -142,8 +142,8 @@ class ParametresCentreView(APIView):
         for ticket in pending:
             agent_min = min(
                 agents,
-                key=lambda a: a.tickets_agent.filter(
-                    statut__in=['ouvert', 'en_cours']
+                key=lambda a: a.tickets_agent.exclude(
+                    statut__in=['ferme', 'rejete']
                 ).count()
             )
             ticket.agent = agent_min

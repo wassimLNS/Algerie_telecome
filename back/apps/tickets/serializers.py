@@ -91,7 +91,7 @@ class CreerTicketSerializer(serializers.ModelSerializer):
         if not agents.exists():
             return
 
-        agent_min = min(agents, key=lambda a: a.tickets_agent.filter(statut__in=['ouvert', 'en_cours']).count())
+        agent_min = min(agents, key=lambda a: a.tickets_agent.exclude(statut__in=['ferme', 'rejete']).count())
         ticket.agent = agent_min
         # On garde le statut initial (SOUMIS) pour laisser au client le temps d'annuler s'il le souhaite
         ticket.attribution_auto = True
