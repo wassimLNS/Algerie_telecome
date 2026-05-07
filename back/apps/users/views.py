@@ -18,7 +18,7 @@ from .serializers import (
     DemandeITSerializer,
     CreerDemandeSerializer,
 )
-from .permissions import EstAdmin, EstAdminIT, EstClient, EstAgentOuPlus
+from .permissions import EstAdmin, EstAdminIT, EstAdminOuAdminIT, EstClient, EstAgentOuPlus
 
 
 def get_tokens_for_user(user):
