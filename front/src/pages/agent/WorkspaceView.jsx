@@ -72,9 +72,9 @@ export default function WorkspaceView({ agentRole = 'agent' }) {
   const filteredTickets = useMemo(() => {
     let filtered = tickets;
     if (activeTab === 'history') {
-      filtered = filtered.filter(t => ['resolu', 'ferme'].includes(t.statut));
+      filtered = filtered.filter(t => ['resolu', 'ferme', 'rejete'].includes(t.statut));
     } else if (activeTab === 'tickets') {
-      filtered = filtered.filter(t => !['resolu', 'ferme'].includes(t.statut));
+      filtered = filtered.filter(t => !['resolu', 'ferme', 'rejete'].includes(t.statut));
     }
     if (searchTerm) {
       const q = searchTerm.toLowerCase();
@@ -223,7 +223,7 @@ export default function WorkspaceView({ agentRole = 'agent' }) {
     agent_annexe: 'Agent Annexe',
   };
 
-  const isClosed = selectedTicket && ['resolu', 'ferme'].includes(selectedTicket.statut);
+  const isClosed = selectedTicket && ['resolu', 'ferme', 'rejete'].includes(selectedTicket.statut);
   const piecesJointes = selectedTicket?.pieces_jointes || [];
 
   return (
