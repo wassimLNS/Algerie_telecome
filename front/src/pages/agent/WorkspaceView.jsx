@@ -548,6 +548,22 @@ export default function WorkspaceView({ agentRole = 'agent' }) {
                   <Button className="workspace-resolve-btn flex-1" onClick={handleResolve}>
                     <CheckCircle2 className="w-5 h-5 mr-3" /> Clôturer Ticket (Solution Rétablie)
                   </Button>
+                  <Button
+                    variant="outline"
+                    className="h-10 px-4 text-xs font-black uppercase border-2 border-red-300 text-red-600 bg-red-50 hover:bg-red-100 rounded-xl transition-all cursor-pointer"
+                    onClick={async () => {
+                      if (!window.confirm('Êtes-vous sûr de vouloir rejeter ce ticket ?')) return;
+                      try {
+                        await updateTicketStatus(selectedTicket.id, { statut: 'rejete' });
+                        setSelectedTicket(null);
+                        fetchTickets();
+                      } catch (err) {
+                        console.error('Failed to reject:', err);
+                      }
+                    }}
+                  >
+                    <X className="w-4 h-4 mr-1" /> Rejeter
+                  </Button>
                   {selectedTicket.source === 'email' && (
                     <Button
                       variant="outline"
