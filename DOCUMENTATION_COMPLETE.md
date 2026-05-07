@@ -133,7 +133,8 @@ projet/
         │   └── features/
         │       ├── portal/      ← Composants Client (CustomerTicketList, CustomerChatDrawer...)
         │       ├── workspace/   ← Composants Agent (ActiveQueue, AgentDashboard...)
-        │       └── admin/       ← Composants Admin (AdminOverview, AgentManagement...)
+        │       ├── admin/       ← Composants Admin (AdminOverview, AgentManagement...)
+        │       └── admin-it/    ← Composants Admin IT (DemandesIT, CentreManagement)
         ├── contexts/            ← AuthContext (gestion JWT)
         ├── hooks/               ← useWebSocket
         ├── i18n/                ← Configuration i18next
@@ -147,6 +148,7 @@ projet/
             ├── client/          ← PortalView
             ├── agent/           ← WorkspaceView
             ├── admin/           ← AdminView
+            ├── admin-it/        ← AdminITView
             └── errors/          ← NotFound, Unauthorized
 ```
 
@@ -330,10 +332,10 @@ app/
 ```
 
 ### App `users`
-- Modèles : `Utilisateur`, `LigneTelephonique`, `HistoriqueConnexion`
+- Modèles : `Utilisateur`, `LigneTelephonique`, `HistoriqueConnexion`, `DemandeIT`
 - Auth client : téléphone + mot de passe
 - Auth staff : email + mot de passe
-- Permissions : `EstClient`, `EstAgent`, `EstAdmin`, `EstAgentOuPlus`, `EstAgentEscalade`
+- Permissions : `EstClient`, `EstAgent`, `EstAdmin`, `EstAdminIT`, `EstAdminOuAdminIT`, `EstAgentOuPlus`, `EstAgentEscalade`
 
 ### App `centres`
 - Modèles : `CentreDistribution`, `ParametresCentre`
@@ -351,7 +353,7 @@ app/
 - API REST pour récupérer/envoyer des messages
 - WebSocket via `ChatConsumer` (Django Channels)
 - Chaque ticket a son canal : `ticket_{ticket_id}`
-- Résumé IA : endpoint `/chat/{ticket_id}/summary/` (texte de résumé laissé vide — prévu pour intégration API externe)
+- Résumé IA : endpoint `/chat/{ticket_id}/resume-ia/` (texte de résumé laissé vide — prévu pour intégration API externe)
 
 ### App `notifications`
 - Modèle : `Email`
@@ -392,9 +394,10 @@ Content-Type: application/json
 | GET | `/users/agents/?role=X&centre=Y` | Liste filtrée (tous centres) | Admin IT |
 | POST | `/users/agents/` | Créer agent/manager | Admin IT |
 | GET | `/users/agents/{id}/` | Détail agent | Admin / Admin IT |
-| PUT | `/users/agents/{id}/` | Modifier agent | Admin IT |
-| DELETE | `/users/agents/{id}/` | Désactiver agent | Admin IT |
-| GET | `/users/connexions/` | Historique connexions agents | Admin |
+| PUT | `/users/agents/{id}/` | Modifier agent (y compris centre) | Admin IT |
+| DELETE | `/users/agents/{id}/` | Supprimer agent | Admin IT |
+| GET | `/users/client/` | Liste des clients du centre | Admin |
+| GET | `/users/connexions/` | Historique connexions | Admin (son centre) / Admin IT (tout) |
 | GET | `/users/clients/connexions/` | Historique connexions clients | Agent + Admin |
 | GET | `/users/mes-lignes/` | Mes lignes téléphoniques | Client |
 | POST | `/users/mes-lignes/` | Ajouter une ligne | Client |
@@ -413,10 +416,10 @@ Content-Type: application/json
 | Méthode | URL | Rôle | Qui |
 |---|---|---|---|
 | GET | `/centres/` | Liste centres | Admin + Admin IT |
-| POST | `/centres/` | Créer centre | Admin |
-| GET | `/centres/{id}/` | Détail centre | Admin |
-| PUT | `/centres/{id}/` | Modifier centre | Admin |
-| DELETE | `/centres/{id}/` | Désactiver centre | Admin |
+| POST | `/centres/` | Créer centre | Admin / Admin IT |
+| GET | `/centres/{id}/` | Détail centre | Admin / Admin IT |
+| PUT | `/centres/{id}/` | Modifier centre | Admin / Admin IT |
+| DELETE | `/centres/{id}/` | Désactiver centre | Admin / Admin IT |
 | GET | `/centres/parametres/` | Voir paramètres SLA | Admin |
 | PUT | `/centres/parametres/` | Modifier paramètres SLA | Admin |
 | GET | `/centres/mon-centre/` | Mon centre | Tous |
@@ -440,7 +443,8 @@ Content-Type: application/json
 | POST | `/tickets/admin/{id}/attribuer/` | Attribution manuelle | Admin |
 | POST | `/tickets/{id}/pieces-jointes/` | Ajouter pièce jointe | Tous |
 | GET | `/tickets/pieces-jointes/{id}/download/` | Télécharger pièce jointe | Tous |
-| GET | `/tickets/agent/mes-tickets/{id}/historique-client/` | Historique tickets du client | Agent |
+| POST | `/tickets/{id}/toggle-email/` | Activer/désactiver relais email | Agent |
+| GET | `/tickets/agent/mes-tickets/{id}/historique/` | Historique tickets du client | Agent |
 
 ### 💬 Chat — `/api/chat/`
 
@@ -449,7 +453,7 @@ Content-Type: application/json
 | GET | `/chat/{ticket_id}/messages/` | Voir messages | Tous |
 | POST | `/chat/{ticket_id}/messages/` | Envoyer message | Tous |
 | GET | `/chat/non-lus/` | Messages non lus | Tous |
-| GET | `/chat/{ticket_id}/summary/` | Résumé IA du ticket | Agent + Tech + Annexe |
+| GET | `/chat/{ticket_id}/resume-ia/` | Résumé IA du ticket | Agent + Tech + Annexe |
 | WS | `ws://127.0.0.1:8000/ws/chat/{ticket_id}/` | Chat temps réel | Tous |
 
 ### 📧 Notifications — `/api/notifications/`
@@ -464,7 +468,7 @@ Content-Type: application/json
 | Méthode | URL | Rôle | Qui |
 |---|---|---|---|
 | GET | `/rapports/stats/` | Statistiques générales | Admin |
-| GET | `/rapports/performances/` | Performances agents | Admin |
+| GET | `/rapports/performances/` | Performances agents | Admin / Admin IT |
 | GET | `/rapports/export/pdf/` | Export PDF | Admin |
 | GET | `/rapports/export/excel/` | Export Excel | Admin |
 
@@ -538,14 +542,17 @@ EstAgentTechnique → role == 'agent_technique'
 EstAgentAnnexe   → role == 'agent_annexe'
 EstAdmin         → role == 'admin'
 EstAdminIT       → role == 'admin_it'
+EstAdminOuAdminIT → role in ['admin', 'admin_it']
 EstAgentOuPlus   → role in ['agent', 'agent_technique', 'agent_annexe', 'admin', 'admin_it']
 EstAgentEscalade → role in ['agent_technique', 'agent_annexe']
 ```
 
 ### Hiérarchie Admin IT
-- **Admin IT** : Rôle global, gère **tous** les centres. Crée/modifie/supprime agents et managers.
-- **Admin (Manager)** : Rôle local, gère **son** centre uniquement. Peut auditer ses agents (lecture seule). Approuve/refuse les demandes IT de ses agents.
+- **Admin IT** : Rôle global, gère **tous** les centres et **tous** les agents/managers. CRUD centres, CRUD agents, voit toutes les performances et connexions. Traite les demandes IT.
+- **Admin (Manager)** : Rôle local, gère **son** centre uniquement. Peut auditer ses agents (lecture seule). Approuve/refuse les demandes IT de ses agents. Voit l'historique des connexions de son centre.
 - **Agent** : Peut soumettre des demandes IT. Pas de gestion d'utilisateurs.
+
+**Contrainte :** Un seul manager (admin) actif par centre.
 
 ---
 
@@ -738,9 +745,10 @@ EMAIL_HOST_PASSWORD=votre-mot-de-passe-app
 - **`AdminView`** — Interface unifiée avec onglets (Overview, Tickets, Agents, Rapports, Paramètres, Demandes IT)
 - **`DemandesAdmin`** — Gestion des demandes IT des agents (approuver/refuser)
 
-#### Admin IT (`components/features/admin-it/`)
-- **`AdminITView`** — Dashboard global inter-centres avec gestion agents/managers
-- **`DemandesIT`** — Traitement des demandes IT approuvées par les managers
+#### Admin IT (`components/features/admin-it/` + `pages/admin-it/`)
+- **`AdminITView`** — Dashboard global inter-centres avec onglets : Experts, Centres, Sessions, Demandes IT
+- **`DemandesIT`** — Traitement des demandes IT approuvées par les managers (affiche demandeur, centre, manager approbateur)
+- **`CentreManagement`** — CRUD complet des centres de distribution (recherche, cartes, modal création/modification)
 
 #### Shared (`components/shared/`)
 - **Header** dynamique selon le rôle de l'utilisateur authentifié
@@ -857,7 +865,7 @@ EMAIL_HOST_PASSWORD=votre-mot-de-passe-app
 ACCESS_TOKEN_LIFETIME_MINUTES=60
 REFRESH_TOKEN_LIFETIME_DAYS=7
 
-CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173,http://127.0.0.1:5173
+CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173,http://localhost:5174,http://127.0.0.1:5173,http://127.0.0.1:5174
 ```
 
 ---

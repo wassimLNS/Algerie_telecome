@@ -73,6 +73,7 @@ Body:
     "email": "sofiane.meziani@at.dz",
     "telephone": "0770123456",
     "role": "agent",
+    "centre": 1,
     "actif": true
 }
 
@@ -80,8 +81,17 @@ DELETE http://127.0.0.1:8000/api/users/agents/{id}/
 
 ----------------------------------------------------------------
 
-GET    http://127.0.0.1:8000/api/users/connexions/         AdminHistorique connexions agents
-GET    http://127.0.0.1:8000/api/users/clients/connexions/ Agent + Admin Historique connexions clients
+GET    http://127.0.0.1:8000/api/users/client/              (token ADMIN — Liste des clients du centre)
+
+----------------------------------------------------------------
+
+GET    http://127.0.0.1:8000/api/users/connexions/                        (token ADMIN ou ADMIN_IT)
+GET    http://127.0.0.1:8000/api/users/connexions/?role=staff             (Filtrer par staff)
+GET    http://127.0.0.1:8000/api/users/connexions/?role=clients           (Filtrer par clients)
+GET    http://127.0.0.1:8000/api/users/connexions/?search=nom&start_date=2024-01-01&end_date=2024-12-31
+
+GET    http://127.0.0.1:8000/api/users/clients/connexions/                (token AGENT ou ADMIN)
+
 ----------------------------------------------------------------
 
 GET    http://127.0.0.1:8000/api/users/mes-lignes/
@@ -116,6 +126,7 @@ DELETE http://127.0.0.1:8000/api/users/mes-lignes/{id}/
 
 GET    http://127.0.0.1:8000/api/centres/
 POST   http://127.0.0.1:8000/api/centres/
+(token ADMIN ou ADMIN_IT)
 Body:
 {
     "code": "AT-ORAN-01",
@@ -211,6 +222,11 @@ Body:
 
 ----------------------------------------------------------------
 
+GET    http://127.0.0.1:8000/api/tickets/agent/mes-tickets/{id}/historique/
+(token AGENT — Historique des tickets du client associe a ce ticket)
+
+----------------------------------------------------------------
+
 POST   http://127.0.0.1:8000/api/tickets/agent/mes-tickets/{id}/escalader/
 (token AGENT)
 Body:
@@ -246,6 +262,14 @@ POST   http://127.0.0.1:8000/api/tickets/{id}/pieces-jointes/
 Key: fichier
 Value: [selectionner un fichier]
 
+GET    http://127.0.0.1:8000/api/tickets/pieces-jointes/{piece_id}/download/
+(Telecharger une piece jointe)
+
+----------------------------------------------------------------
+
+POST   http://127.0.0.1:8000/api/tickets/{id}/toggle-email/
+(token AGENT — Activer/Desactiver le relais email pour ce ticket)
+
 
 ------------------------------------------
  💬 CHAT — http://127.0.0.1:8000/api/chat/
@@ -258,6 +282,11 @@ Body:
 {
     "contenu": "Bonjour, ma connexion est toujours coupee, pouvez-vous m'aider ?"
 }
+
+----------------------------------------------------------------
+
+GET    http://127.0.0.1:8000/api/chat/{ticket_id}/resume-ia/
+(token AGENT — Resume IA de la conversation du ticket)
 
 ----------------------------------------------------------------
 
@@ -288,6 +317,7 @@ POST   http://127.0.0.1:8000/api/notifications/tester/
 ------------------------------------------
 
 GET    http://127.0.0.1:8000/api/rapports/stats/
+GET    http://127.0.0.1:8000/api/rapports/stats/?service=ADSL&start_date=2024-01-01&end_date=2024-12-31
 GET    http://127.0.0.1:8000/api/rapports/performances/
 GET    http://127.0.0.1:8000/api/rapports/export/pdf/
 GET    http://127.0.0.1:8000/api/rapports/export/excel/
@@ -299,7 +329,7 @@ GET    http://127.0.0.1:8000/api/rapports/export/excel/
 
 GET    http://127.0.0.1:8000/api/users/demandes/        (token AGENT — Mes demandes)
 
-POST   http://127.0.0.1:8000/api/users/demandes/        (token AGENT — Créer demande)
+POST   http://127.0.0.1:8000/api/users/demandes/        (token AGENT — Creer demande)
 Body:
 {
     "type_demande": "equipement",
@@ -319,7 +349,7 @@ Body:
 
 ----------------------------------------------------------------
 
-GET    http://127.0.0.1:8000/api/users/demandes/it/      (token ADMIN_IT — Toutes les demandes approuvées)
+GET    http://127.0.0.1:8000/api/users/demandes/it/      (token ADMIN_IT — Toutes les demandes approuvees)
 
 PUT    http://127.0.0.1:8000/api/users/demandes/it/{id}/  (token ADMIN_IT — Traiter demande)
 Body:
@@ -389,7 +419,7 @@ Body:
  📝 NOTES IMPORTANTES
 ------------------------------------------
 
-1. Pour tous les endpoints (sauf login) :
+1. Pour tous les endpoints (sauf login et n8n) :
    → Ajouter dans Headers :
      Authorization: Bearer {access_token}
 
@@ -413,22 +443,11 @@ Body:
 6. Lignes telephoniques → token CLIENT uniquement
    Un client peut avoir plusieurs lignes (plusieurs maisons)
 
-------------------------------------------
+7. Contrainte Manager : un seul manager (admin) actif par centre
 
-
- 📝 NOTES IMPORTANTES
-----------------------------------------------------------------
-
- Pour tous les endpoints (sauf login) :
-   → Ajouter dans Headers :
-     Authorization: Bearer {access_token}
-
- access token jdid :
-   → POST http://127.0.0.1:8000http://127.0.0.1:8000/api/auth/token/refresh/
-   → Body: { "refresh": "ton-refresh-token" }
-
-
- Pièces jointes  utiliser form-data (pas JSON)
-   Key: fichier | Value: [fichier]
-
-
+8. Permissions ADMIN_IT :
+   - CRUD agents et managers
+   - CRUD centres
+   - Voir toutes les performances
+   - Voir tout l'historique des connexions
+   - Traiter les demandes IT
