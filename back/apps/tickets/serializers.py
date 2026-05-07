@@ -138,8 +138,7 @@ class MettreAJourTicketSerializer(serializers.ModelSerializer):
     def validate_statut(self, value):
         ticket = self.instance
         transitions = {
-            'soumis': ['ouvert', 'en_cours', 'resolu', 'rejete'], 
-            'ouvert': ['en_cours', 'resolu', 'rejete'], 
+            'soumis': ['en_cours', 'resolu', 'rejete'], 
             'en_cours': ['resolu', 'escalade_technique', 'escalade_annexe', 'rejete'], 
             'escalade_technique': ['resolu', 'ferme'], 
             'escalade_annexe': ['resolu', 'ferme'], 

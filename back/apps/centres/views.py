@@ -136,7 +136,7 @@ class ParametresCentreView(APIView):
         pending = Ticket.objects.filter(
             centre=centre,
             agent__isnull=True,
-            statut__in=['soumis', 'ouvert']
+            statut__in=['soumis']
         ).order_by('created_at')
 
         for ticket in pending:

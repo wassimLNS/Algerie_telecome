@@ -40,7 +40,7 @@ class StatsGeneralesView(APIView):
 
         # Stats globales
         total           = tickets.count()
-        ouverts         = tickets.filter(statut='ouvert').count()
+        ouverts         = tickets.filter(statut='soumis').count()
         en_cours        = tickets.filter(statut='en_cours').count()
         resolus         = tickets.filter(statut='resolu').count()
         fermes          = tickets.filter(statut='ferme').count()
@@ -131,7 +131,7 @@ class PerformancesAgentsView(APIView):
 
             resolus  = tickets.filter(statut__in=['resolu', 'ferme']).count()
             escalades = tickets.filter(statut__in=['escalade_technique', 'escalade_annexe']).count()
-            actifs   = tickets.filter(statut__in=['ouvert', 'en_cours']).count()
+            actifs   = tickets.filter(statut__in=['soumis', 'en_cours']).count()
 
             # Temps moyen de résolution en minutes
             temps_resolution = tickets.filter(
@@ -210,7 +210,7 @@ class ExportPDFView(APIView):
         data = [
             ['Indicateur', 'Valeur'],
             ['Total tickets',   tickets.count()],
-            ['Ouverts',         tickets.filter(statut='ouvert').count()],
+            ['Soumis',          tickets.filter(statut='soumis').count()],
             ['En cours',        tickets.filter(statut='en_cours').count()],
             ['Résolus',         tickets.filter(statut='resolu').count()],
             ['Fermés',          tickets.filter(statut='ferme').count()],

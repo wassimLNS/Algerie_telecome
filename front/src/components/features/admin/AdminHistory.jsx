@@ -11,8 +11,7 @@ export function AdminHistory({ tickets = [] }) {
   const [searchQuery, setSearchQuery] = useState('');
 
   const STATUS_MAP = {
-    soumis:              { label: t('portal.open'),        cls: 'bg-slate-100 text-slate-500' },
-    ouvert:              { label: t('portal.open'),        cls: 'bg-blue-100 text-blue-800' },
+    soumis:              { label: 'Nouveau',               cls: 'bg-indigo-100 text-indigo-700' },
     en_cours:            { label: t('portal.in_progress'), cls: 'bg-amber-100 text-amber-800' },
     resolu:              { label: t('portal.resolved'),    cls: 'bg-emerald-100 text-emerald-800' },
     ferme:               { label: t('portal.closed'),      cls: 'bg-slate-100 text-slate-600' },
@@ -69,7 +68,7 @@ export function AdminHistory({ tickets = [] }) {
               </TableRow>
             ) : (
               filtered.map((t) => {
-                const statusInfo = STATUS_MAP[t.statut] || STATUS_MAP.ouvert;
+                const statusInfo = STATUS_MAP[t.statut] || STATUS_MAP.soumis;
                 return (
                   <TableRow key={t.id} className="h-20 hover:bg-slate-50 transition-all">
                     <TableCell className="pl-10">

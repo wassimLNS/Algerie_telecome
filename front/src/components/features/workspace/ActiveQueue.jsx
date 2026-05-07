@@ -11,8 +11,7 @@ export function ActiveQueue({ tickets, onOpenTicket, isHistory = false }) {
   const { t } = useTranslation();
 
   const STATUS_MAP = {
-    soumis: { label: t('portal.open'), color: 'bg-slate-100 text-slate-500' },
-    ouvert: { label: t('portal.open'), color: 'bg-blue-100 text-blue-800' },
+    soumis: { label: 'Nouveau', color: 'bg-indigo-100 text-indigo-700' },
     en_cours: { label: t('portal.in_progress'), color: 'bg-amber-100 text-amber-800' },
     resolu: { label: t('portal.resolved'), color: 'bg-emerald-100 text-emerald-800' },
     ferme: { label: t('portal.closed'), color: 'bg-slate-100 text-slate-600' },
@@ -70,7 +69,7 @@ export function ActiveQueue({ tickets, onOpenTicket, isHistory = false }) {
           ) : (
             tickets.map((ticket) => {
               const sla = getSlaInfo(ticket);
-              const statusInfo = STATUS_MAP[ticket.statut] || STATUS_MAP.ouvert;
+              const statusInfo = STATUS_MAP[ticket.statut] || STATUS_MAP.soumis;
               const priorityInfo = PRIORITY_MAP[ticket.priorite] || PRIORITY_MAP.normale;
               const ref = ticket.numero_ticket || `TKT-${ticket.id}`;
 

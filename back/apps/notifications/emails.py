@@ -75,7 +75,7 @@ def envoyer_email(destinataire, type_email, sujet, contexte, ticket=None):
 def notifier_changement_statut(ticket):
     """Envoie un email au client quand le statut de son ticket change"""
     statut_labels = {
-        'ouvert':             'Ouvert',
+        'soumis':             'Soumis',
         'en_cours':           'En cours de traitement',
         'escalade_technique': 'Escaladé vers un technicien',
         'escalade_annexe':    'Escaladé vers le service annexe',

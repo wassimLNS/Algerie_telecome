@@ -27,7 +27,7 @@ class CentreDistributionSerializer(serializers.ModelSerializer):
 
     def get_nombre_tickets_actifs(self, obj):
         return obj.tickets.filter(
-            statut__in=['ouvert', 'en_cours']
+            statut__in=['soumis', 'en_cours']
         ).count()
 
 

@@ -205,7 +205,7 @@ class AgentListSerializer(serializers.ModelSerializer):
 
     def get_tickets_actifs(self, obj):
         return obj.tickets_agent.filter(
-            statut__in=['ouvert', 'en_cours']
+            statut__in=['soumis', 'en_cours']
         ).count()
 
 

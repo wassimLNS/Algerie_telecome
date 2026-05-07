@@ -277,7 +277,7 @@ class AgentDetailView(APIView):
         if not agent:
             return Response({'error': 'Agent introuvable'}, status=status.HTTP_404_NOT_FOUND)
         from apps.tickets.models import Ticket
-        Ticket.objects.filter(agent=agent, statut__in=['ouvert', 'en_cours']).update(agent=None, attribution_auto=False)
+        Ticket.objects.filter(agent=agent, statut__in=['soumis', 'en_cours']).update(agent=None, attribution_auto=False)
         agent.delete()
         return Response({'message': 'Agent supprimé avec succès'})
 
