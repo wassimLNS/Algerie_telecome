@@ -40,13 +40,8 @@ class CheckEmailView(APIView):
             return Response({'error': 'Email requis'}, status=status.HTTP_400_BAD_REQUEST)
 
         from apps.users.models import Utilisateur
-        # Chercher par email principal OU par email_n8n (email source sauvegardé)
-        user = Utilisateur.objects.filter(
-            models.Q(email__iexact=email) | models.Q(email_n8n__iexact=email),
-            role='client', actif=True
-        ).first()
-
-        if user:
+        try:
+            user = Utilisateur.objects.get(email__iexact=email, role='client', actif=True)
             return Response({
                 'found': True,
                 'client_id': str(user.id),
@@ -54,7 +49,8 @@ class CheckEmailView(APIView):
                 'prenom': user.prenom,
                 'telephone': user.telephone,
             })
-        return Response({'found': False})
+        except Utilisateur.DoesNotExist:
+            return Response({'found': False})
 
 
 # ============================================================
@@ -89,12 +85,10 @@ class AuthenticateView(APIView):
         if not user.check_password(password):
             return Response({'success': False, 'error': 'Mot de passe incorrect'})
 
-        # Sauvegarder l'email source pour que Check Email le reconnaisse
-        if email_source:
-            user.email_n8n = email_source
-            if not user.email:
-                user.email = email_source
-            user.save(update_fields=['email_n8n', 'email'])
+        # Sauvegarder l'email du client pour que Check Email le reconnaisse
+        if email_source and not user.email:
+            user.email = email_source
+            user.save(update_fields=['email'])
 
         # Vérifier s'il y a une réclamation en attente pour cet email
         pending = EmailPending.objects.filter(email=email_source).first() if email_source else None
