@@ -256,7 +256,7 @@ Configuration opérationnelle indépendante pour chaque centre.
 | agent_annexe_id | FK | Agent annexe (si escalade) |
 | centre_id | FK | Centre de traitement |
 | type_service_id | FK | Type de dérangement |
-| statut | ENUM | soumis, ouvert, en_cours, escalade_*, resolu, ferme, rejete |
+| statut | ENUM | soumis, en_cours, escalade_*, resolu, ferme, rejete |
 | priorite | ENUM | basse, normale, haute, critique |
 | echeance_sla | DATETIME | Délai de résolution calculé auto |
 
@@ -577,13 +577,14 @@ Ces délais sont configurables par centre dans `ParametresCentre`.
 
 ### Transitions de Statut
 ```
-soumis            → ouvert (lorsqu'un agent prend en charge), rejete, (suppression par le client)
-ouvert            → en_cours, rejete
+soumis            → en_cours (quand l'agent envoie un message), rejete, (suppression par le client)
 en_cours          → resolu, escalade_technique, escalade_annexe, rejete
 escalade_technique → resolu, ferme
 escalade_annexe   → resolu, ferme
 resolu            → ferme
 ```
+
+> **Note :** Le statut `ouvert` a été supprimé du workflow. Quand un agent répond à un ticket `soumis`, il passe directement en `en_cours`. L'agent peut aussi **rejeter** un ticket (doublon, hors périmètre, spam) via un bouton dédié dans le drawer. Un ticket rejeté disparaît de la file active et apparaît dans l'historique en lecture seule.
 
 ### Escalade
 - L'agent décide d'escalader si le problème est trop complexe
@@ -735,12 +736,13 @@ EMAIL_HOST_PASSWORD=votre-mot-de-passe-app
 
 #### Agent (`components/features/workspace/`)
 - **`ActiveQueue`** — File d'attente des tickets avec indicateurs SLA et priorité
-- **`AgentDashboard`** — KPI dynamiques (résolutions du jour, respect SLA)
-- **`WorkspaceView`** — Console complète : barre d'infos ticket (client, téléphone, service, description), panneau d'escalade, chat responsive, résumé IA
+- **`AgentDashboard`** — Dashboard interactif avec filtres : sélecteur de dimension (statut/priorité/date), type de graphe (barres/ligne), filtre date (début/fin). 4 KPI cards (Résolutions du jour, Tickets Actifs, Total Résolus, Total Assignés) + carte Session
+- **`WorkspaceView`** — Console complète : barre d'infos ticket, panneau d'escalade, chat responsive, résumé IA, bouton **Rejeter** (avec confirmation), toggle email
 - Vue unique partagée entre Agent, Agent Technique et Agent Annexe (via prop `agentRole`)
+- Les tickets rejetés disparaissent de la file active et passent dans l'historique en lecture seule
 
 #### Admin (`components/features/admin/`)
-- **`AdminOverview`** — Vue d'ensemble avec graphiques Recharts (BarChart, AreaChart, PieChart), KPI globaux, dimensions commutables (types, temps, priorité, agents)
+- **`AdminOverview`** — Vue d'ensemble avec graphiques Recharts (BarChart, AreaChart), KPI globaux, dimensions commutables (types, temps, priorité, agents). Onglet sidebar renommé **Statistiques**
 - **`AgentManagement`** — CRUD complet des agents du centre, filtres par rôle et centre (admin_it), sélection centre à la création
 - **`AdminView`** — Interface unifiée avec onglets (Overview, Tickets, Agents, Rapports, Paramètres, Demandes IT)
 - **`DemandesAdmin`** — Gestion des demandes IT des agents (approuver/refuser)
