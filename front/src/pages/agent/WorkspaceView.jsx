@@ -2,11 +2,12 @@ import React, { useState, useEffect, useContext, useMemo, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { AuthContext } from '@/contexts/AuthContext';
-import { getAgentTickets, getAgentTicketDetail, updateTicketStatus, escalateTicket, getEscalatedTickets, getTicketClientHistory } from '@/api/tickets';
+import { getAgentTickets, getAgentTicketDetail, updateTicketStatus, escalateTicket, getEscalatedTickets, getTicketClientHistory, toggleEmailRelay } from '@/api/tickets';
 import { getMessages, sendMessage as sendMessageAPI, getAISummary } from '@/api/chat';
 import { useWebSocket } from '@/hooks/useWebSocket';
 import { AgentDashboard } from '@/components/features/workspace/AgentDashboard';
 import { ActiveQueue } from '@/components/features/workspace/ActiveQueue';
+import DemandesAgent from '@/components/features/workspace/DemandesAgent';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -24,7 +25,7 @@ import '@/components/features/workspace/workspace-view.css';
 export default function WorkspaceView({ agentRole = 'agent' }) {
   const { user } = useContext(AuthContext);
   const { t } = useTranslation();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get('tab') || 'dashboard';
   const [searchTerm, setSearchTerm] = useState('');
   const [tickets, setTickets] = useState([]);
@@ -71,9 +72,9 @@ export default function WorkspaceView({ agentRole = 'agent' }) {
   const filteredTickets = useMemo(() => {
     let filtered = tickets;
     if (activeTab === 'history') {
-      filtered = filtered.filter(t => ['resolu', 'ferme'].includes(t.statut));
+      filtered = filtered.filter(t => ['resolu', 'ferme', 'rejete'].includes(t.statut));
     } else if (activeTab === 'tickets') {
-      filtered = filtered.filter(t => !['resolu', 'ferme'].includes(t.statut));
+      filtered = filtered.filter(t => !['resolu', 'ferme', 'rejete'].includes(t.statut));
     }
     if (searchTerm) {
       const q = searchTerm.toLowerCase();
@@ -222,7 +223,7 @@ export default function WorkspaceView({ agentRole = 'agent' }) {
     agent_annexe: 'Agent Annexe',
   };
 
-  const isClosed = selectedTicket && ['resolu', 'ferme'].includes(selectedTicket.statut);
+  const isClosed = selectedTicket && ['resolu', 'ferme', 'rejete'].includes(selectedTicket.statut);
   const piecesJointes = selectedTicket?.pieces_jointes || [];
 
   return (
@@ -243,9 +244,10 @@ export default function WorkspaceView({ agentRole = 'agent' }) {
             <Search className="workspace-search-icon" />
             <Input placeholder={t('portal.search')} className="workspace-search-input" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
           </div>
-          <Button variant={activeTab === 'dashboard' ? 'default' : 'outline'} className="workspace-nav-btn" onClick={() => setActiveTab('dashboard')}>{t('sidebar.performance')}</Button>
-          <Button variant={activeTab === 'tickets' ? 'default' : 'outline'} className="workspace-nav-btn" onClick={() => setActiveTab('tickets')}>{t('sidebar.tickets')}</Button>
-          <Button variant={activeTab === 'history' ? 'default' : 'outline'} className="workspace-nav-btn" onClick={() => setActiveTab('history')}>{t('sidebar.history')}</Button>
+          <Button variant={activeTab === 'dashboard' ? 'default' : 'outline'} className="workspace-nav-btn" onClick={() => setSearchParams({ tab: 'dashboard' })}>{t('sidebar.performance')}</Button>
+          <Button variant={activeTab === 'tickets' ? 'default' : 'outline'} className="workspace-nav-btn" onClick={() => setSearchParams({ tab: 'tickets' })}>{t('sidebar.tickets')}</Button>
+          <Button variant={activeTab === 'history' ? 'default' : 'outline'} className="workspace-nav-btn" onClick={() => setSearchParams({ tab: 'history' })}>{t('sidebar.history')}</Button>
+          <Button variant={activeTab === 'demandes' ? 'default' : 'outline'} className="workspace-nav-btn" onClick={() => setSearchParams({ tab: 'demandes' })}>Demandes IT</Button>
         </div>
       </div>
 
@@ -253,6 +255,8 @@ export default function WorkspaceView({ agentRole = 'agent' }) {
       <div className="workspace-main-content">
         {activeTab === 'dashboard' ? (
           <AgentDashboard tickets={tickets} user={user} />
+        ) : activeTab === 'demandes' ? (
+          <DemandesAgent />
         ) : (
           <ActiveQueue tickets={filteredTickets} onOpenTicket={handleOpenTicket} isHistory={activeTab === 'history'} />
         )}
@@ -519,7 +523,7 @@ export default function WorkspaceView({ agentRole = 'agent' }) {
                         <div className={`workspace-msg-bubble ${isAgent ? 'outgoing' : 'incoming'}`}>
                           <p className="msg-text">{m.contenu || m.text}</p>
                           <div className="msg-meta">
-                            <span>{senderLabel}</span>
+                            <span>{senderLabel}{m.via_email && <Mail className="w-3 h-3 inline ml-1 opacity-60" />}</span>
                             <span>{dateStr}</span>
                           </div>
                         </div>
@@ -540,12 +544,50 @@ export default function WorkspaceView({ agentRole = 'agent' }) {
             {/* Footer */}
             {agentRole === 'agent' && !isClosed ? (
               <div className="workspace-chat-footer">
-                <Button className="workspace-resolve-btn" onClick={handleResolve}>
-                  <CheckCircle2 className="w-5 h-5 mr-3" /> Clôturer Ticket (Solution Rétablie)
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button className="workspace-resolve-btn flex-1" onClick={handleResolve}>
+                    <CheckCircle2 className="w-5 h-5 mr-3" /> Clôturer Ticket (Solution Rétablie)
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="h-10 px-4 text-xs font-black uppercase border-2 border-red-300 text-red-600 bg-red-50 hover:bg-red-100 rounded-xl transition-all cursor-pointer"
+                    onClick={async () => {
+                      if (!window.confirm('Êtes-vous sûr de vouloir rejeter ce ticket ?')) return;
+                      try {
+                        await updateTicketStatus(selectedTicket.id, { statut: 'rejete' });
+                        setSelectedTicket(null);
+                        fetchTickets();
+                      } catch (err) {
+                        console.error('Failed to reject:', err);
+                      }
+                    }}
+                  >
+                    <X className="w-4 h-4 mr-1" /> Rejeter
+                  </Button>
+                  {selectedTicket.source === 'email' && (
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "h-10 px-3 text-xs font-bold border-2 rounded-xl transition-all",
+                        selectedTicket.email_actif
+                          ? "border-blue-400 text-blue-600 bg-blue-50 hover:bg-blue-100"
+                          : "border-slate-300 text-slate-400 bg-slate-50 hover:bg-slate-100"
+                      )}
+                      onClick={async () => {
+                        try {
+                          const res = await toggleEmailRelay(selectedTicket.id);
+                          setSelectedTicket(prev => ({ ...prev, email_actif: res.email_actif }));
+                        } catch (e) { console.error(e); }
+                      }}
+                      title={selectedTicket.email_actif ? 'Désactiver le relais email' : 'Activer le relais email'}
+                    >
+                      {selectedTicket.email_actif ? <Mail className="w-4 h-4" /> : <MailX className="w-4 h-4" />}
+                    </Button>
+                  )}
+                </div>
                 <div className="workspace-reply-form">
                   <Textarea
-                    placeholder="Réponse à l'abonné..."
+                    placeholder={selectedTicket.source === 'email' && selectedTicket.email_actif ? "Réponse (sera aussi envoyée par email)..." : "Réponse à l'abonné..."}
                     className="workspace-reply-input"
                     value={replyText}
                     onChange={(e) => setReplyText(e.target.value)}

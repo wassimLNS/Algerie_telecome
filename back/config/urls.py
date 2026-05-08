@@ -21,4 +21,5 @@ urlpatterns = [
     path('api/chat/',          include('apps.chat.urls')),
     path('api/notifications/', include('apps.notifications.urls')),
     path('api/rapports/',      include('apps.rapports.urls')),
+    path('api/n8n/',           include('apps.tickets.n8n_urls')),
 ]

@@ -39,6 +39,7 @@ class Message(models.Model):
     )
     lu_par_client   = models.BooleanField(default=False)
     lu_par_agent    = models.BooleanField(default=False)
+    via_email       = models.BooleanField(default=False)
     created_at      = models.DateTimeField(auto_now_add=True)
     modifie_at      = models.DateTimeField(null=True, blank=True)
 

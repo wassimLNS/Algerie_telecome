@@ -229,3 +229,24 @@ class EscaladerTicketView(APIView):
             escalade = serializer.save()
             return Response(EscaladeSerializer(escalade).data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ToggleEmailView(APIView):
+    """Active/désactive le relais email pour un ticket source=email"""
+    permission_classes = [IsAuthenticated, EstAgentOuPlus]
+
+    def post(self, request, ticket_id):
+        try:
+            ticket = Ticket.objects.get(id=ticket_id)
+        except Ticket.DoesNotExist:
+            return Response({'error': 'Ticket introuvable'}, status=status.HTTP_404_NOT_FOUND)
+
+        if ticket.source != 'email':
+            return Response({'error': 'Ce ticket n\'est pas un ticket email'}, status=status.HTTP_400_BAD_REQUEST)
+
+        ticket.email_actif = not ticket.email_actif
+        ticket.save(update_fields=['email_actif'])
+        return Response({
+            'email_actif': ticket.email_actif,
+            'message': f"Relais email {'activé' if ticket.email_actif else 'désactivé'}"
+        })

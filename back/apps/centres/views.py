@@ -5,27 +5,33 @@ from rest_framework.permissions import IsAuthenticated
 
 from .models import CentreDistribution, ParametresCentre
 from .serializers import CentreDistributionSerializer, ParametresCentreSerializer
-from apps.users.permissions import EstAdmin
+from apps.users.permissions import EstAdmin, EstAdminOuAdminIT
 
 
 # ============================================================
 # LISTE ET CRÉATION DES CENTRES
 # ============================================================
 class CentresView(APIView):
-    permission_classes = [IsAuthenticated, EstAdmin]
+    permission_classes = [IsAuthenticated]
+
+    def check_permissions(self, request):
+        super().check_permissions(request)
+        if request.user.role not in ['admin', 'admin_it']:
+            self.permission_denied(request)
 
     def get(self, request):
-        """Liste tous les centres"""
+        """Liste tous les centres (admin + admin_it)"""
         centres = CentreDistribution.objects.filter(actif=True)
         serializer = CentreDistributionSerializer(centres, many=True)
         return Response(serializer.data)
 
     def post(self, request):
-        """Créer un nouveau centre"""
+        """Créer un nouveau centre (admin et admin_it)"""
+        if request.user.role not in ['admin', 'admin_it']:
+            return Response({'error': 'Non autorisé'}, status=status.HTTP_403_FORBIDDEN)
         serializer = CentreDistributionSerializer(data=request.data)
         if serializer.is_valid():
             centre = serializer.save()
-            # Créer les paramètres par défaut pour ce centre
             ParametresCentre.objects.create(centre=centre)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -35,7 +41,7 @@ class CentresView(APIView):
 # DÉTAIL D'UN CENTRE
 # ============================================================
 class CentreDetailView(APIView):
-    permission_classes = [IsAuthenticated, EstAdmin]
+    permission_classes = [IsAuthenticated, EstAdminOuAdminIT]
 
     def get_centre(self, centre_id):
         try:
@@ -130,14 +136,14 @@ class ParametresCentreView(APIView):
         pending = Ticket.objects.filter(
             centre=centre,
             agent__isnull=True,
-            statut__in=['soumis', 'ouvert']
+            statut__in=['soumis']
         ).order_by('created_at')
 
         for ticket in pending:
             agent_min = min(
                 agents,
-                key=lambda a: a.tickets_agent.filter(
-                    statut__in=['ouvert', 'en_cours']
+                key=lambda a: a.tickets_agent.exclude(
+                    statut__in=['ferme', 'rejete']
                 ).count()
             )
             ticket.agent = agent_min

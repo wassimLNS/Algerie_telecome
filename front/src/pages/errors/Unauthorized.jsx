@@ -14,6 +14,7 @@ export default function Unauthorized() {
     : user.role === 'agent_technique' ? '/technique/dashboard'
     : user.role === 'agent_annexe' ? '/annexe/dashboard'
     : user.role === 'admin' ? '/admin/dashboard'
+    : user.role === 'admin_it' ? '/admin-it/dashboard'
     : '/'
     : '/';
 

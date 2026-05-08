@@ -124,7 +124,7 @@ class MessagesTicketView(APIView):
             )
             
             # Changer le statut du ticket si un agent répond
-            if request.user.role != 'client' and ticket.statut in ['soumis', 'ouvert']:
+            if request.user.role != 'client' and ticket.statut in ['soumis']:
                 ticket.statut = 'en_cours'
                 ticket.save()
 

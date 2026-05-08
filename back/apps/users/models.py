@@ -12,6 +12,7 @@ class Role(models.TextChoices):
     AGENT_TECHNIQUE  = 'agent_technique',  'Agent Technique'
     AGENT_ANNEXE     = 'agent_annexe',     'Agent Annexe'
     ADMIN            = 'admin',            'Admin'
+    ADMIN_IT         = 'admin_it',         'Admin IT'
 
 
 class TypeClient(models.TextChoices):
@@ -61,6 +62,7 @@ class Utilisateur(AbstractBaseUser, PermissionsMixin):
     # Agents/Admin → email + mot de passe
     telephone = models.CharField(max_length=20, unique=True, null=True, blank=True)
     email     = models.EmailField(unique=True, null=True, blank=True)
+    email_n8n = models.EmailField(null=True, blank=True, help_text="Email source n8n (pour identifier le client par email)")
 
     # --- Identité ---
     nom            = models.CharField(max_length=100)
@@ -136,6 +138,10 @@ class Utilisateur(AbstractBaseUser, PermissionsMixin):
     def is_admin(self):
         return self.role == Role.ADMIN
 
+    @property
+    def is_admin_it(self):
+        return self.role == Role.ADMIN_IT
+
 
 # ============================================================
 # HISTORIQUE DES CONNEXIONS
@@ -185,3 +191,70 @@ class LigneTelephonique(models.Model):
 
     def __str__(self):
         return f"{self.numero} ({self.client.prenom} {self.client.nom})"
+
+
+# ============================================================
+# DEMANDES IT (Agent → Admin → Admin IT)
+# ============================================================
+class StatutDemande(models.TextChoices):
+    EN_ATTENTE   = 'en_attente',   'En attente'
+    APPROUVEE    = 'approuvee',    'Approuvée'
+    REFUSEE      = 'refusee',      'Refusée'
+    TRAITEE      = 'traitee',      'Traitée'
+    REFUSEE_IT   = 'refusee_it',   'Refusée par IT'
+
+
+class PrioriteDemande(models.TextChoices):
+    BASSE    = 'basse',    'Basse'
+    NORMALE  = 'normale',  'Normale'
+    HAUTE    = 'haute',    'Haute'
+    URGENTE  = 'urgente',  'Urgente'
+
+
+class DemandeIT(models.Model):
+
+    demandeur = models.ForeignKey(
+        Utilisateur,
+        on_delete=models.CASCADE,
+        related_name='demandes_envoyees'
+    )
+    centre = models.ForeignKey(
+        'centres.CentreDistribution',
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='demandes_it'
+    )
+    sujet       = models.CharField(max_length=200)
+    description = models.TextField()
+    priorite    = models.CharField(max_length=20, choices=PrioriteDemande.choices, default=PrioriteDemande.NORMALE)
+    statut      = models.CharField(max_length=20, choices=StatutDemande.choices, default=StatutDemande.EN_ATTENTE)
+
+    # Réponse de l'admin du centre
+    reponse_admin = models.TextField(null=True, blank=True)
+    approuve_par  = models.ForeignKey(
+        Utilisateur,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='demandes_approuvees'
+    )
+
+    # Réponse de l'admin IT
+    reponse_it = models.TextField(null=True, blank=True)
+    traite_par = models.ForeignKey(
+        Utilisateur,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='demandes_traitees'
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'demandes_it'
+        verbose_name = 'Demande IT'
+        verbose_name_plural = 'Demandes IT'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"[{self.statut}] {self.sujet} — {self.demandeur}"

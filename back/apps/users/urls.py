@@ -11,6 +11,9 @@ from .views import (
     LigneDetailView,
     HistoriqueConnexionsClientsView,
     ClientsView,
+    DemandesAgentView,
+    DemandesAdminView,
+    DemandesITView,
 )
 
 urlpatterns = [
@@ -34,4 +37,11 @@ urlpatterns = [
     # Lignes téléphoniques (client)
     path('mes-lignes/',                     LignesView.as_view(),       name='mes-lignes'),
     path('mes-lignes/<int:ligne_id>/',      LigneDetailView.as_view(),  name='ligne-detail'),
+
+    # Demandes IT
+    path('demandes/',                       DemandesAgentView.as_view(),  name='demandes-agent'),
+    path('demandes/admin/',                 DemandesAdminView.as_view(),  name='demandes-admin'),
+    path('demandes/admin/<int:demande_id>/', DemandesAdminView.as_view(), name='demandes-admin-detail'),
+    path('demandes/it/',                    DemandesITView.as_view(),     name='demandes-it'),
+    path('demandes/it/<int:demande_id>/',   DemandesITView.as_view(),     name='demandes-it-detail'),
 ]

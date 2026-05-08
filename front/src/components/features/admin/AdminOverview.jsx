@@ -4,10 +4,9 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Star, Award, Clock, Database, Users, CheckCircle2, AlertTriangle } from 'lucide-react';
-import { ResponsiveContainer, AreaChart, Area, BarChart, Bar, CartesianGrid, XAxis, YAxis, Tooltip, PieChart, Pie, Cell } from 'recharts';
+import { ResponsiveContainer, AreaChart, Area, BarChart, Bar, CartesianGrid, XAxis, YAxis, Tooltip } from 'recharts';
 import { cn } from '@/lib/utils';
 
-const COLORS = ['#0055A4', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'];
 
 export function AdminOverview({ stats, performances: rawPerformances = [], tickets = [] }) {
   const { t } = useTranslation();
@@ -65,15 +64,6 @@ export function AdminOverview({ stats, performances: rawPerformances = [], ticke
     }
   }, [stats, performances, activeDimension]);
 
-  // Pie chart data (type distribution)
-  const typeDistribution = useMemo(() => {
-    if (!stats?.par_type_service) return [];
-    const total = stats.par_type_service.reduce((s, t) => s + t.count, 0) || 1;
-    return stats.par_type_service.map(d => ({
-      name: d.libelle,
-      value: Math.round((d.count / total) * 100),
-    }));
-  }, [stats]);
 
   if (!stats) {
     return (
@@ -106,9 +96,9 @@ export function AdminOverview({ stats, performances: rawPerformances = [], ticke
       </div>
 
       {/* ─── Charts Row ───────────────────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <div className="grid grid-cols-1 gap-8">
         {/* Main Chart - Multi Dimensions */}
-        <Card className="lg:col-span-8 rounded-[2rem] shadow-2xl bg-white overflow-hidden">
+        <Card className="rounded-[2rem] shadow-2xl bg-white overflow-hidden">
           <CardHeader className="border-b bg-slate-50/30 p-8 flex flex-row items-center justify-between">
             <div>
               <CardTitle className="text-2xl font-black text-slate-900 uppercase tracking-tighter">{t('admin.analytics')}</CardTitle>
@@ -157,26 +147,6 @@ export function AdminOverview({ stats, performances: rawPerformances = [], ticke
                 </BarChart>
               )}
             </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        {/* Pie Chart - Mix Services */}
-        <Card className="lg:col-span-4 rounded-[2rem] shadow-2xl bg-white overflow-hidden">
-          <CardHeader className="border-b bg-slate-50/30 p-8">
-            <CardTitle className="text-2xl font-black text-slate-900 uppercase tracking-tighter">{t('admin.mix_services')}</CardTitle>
-            <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mt-1">{t('admin.technical_split')}</p>
-          </CardHeader>
-          <CardContent className="h-[450px] flex flex-col items-center justify-center p-8">
-            <div className="h-[280px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie data={typeDistribution} cx="50%" cy="50%" innerRadius={80} outerRadius={120} paddingAngle={10} dataKey="value" stroke="none">
-                    {typeDistribution.map((_, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
-                  </Pie>
-                  <Tooltip contentStyle={{ borderRadius: '16px', border: 'none' }} />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
           </CardContent>
         </Card>
       </div>

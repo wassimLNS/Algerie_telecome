@@ -16,6 +16,7 @@ reportlab = "*"
 openpyxl = "*"
 psycopg2-binary = "*"
 channels-redis = "*"
+requests = "*"
 
 [dev-packages]
 

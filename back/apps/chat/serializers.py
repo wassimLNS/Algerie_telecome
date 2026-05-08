@@ -24,9 +24,8 @@ class MessageSerializer(serializers.ModelSerializer):
             'id', 'ticket',
             'expediteur', 'expediteur_nom', 'expediteur_prenom',
             'expediteur_type', 'expediteur_role', 'contenu',
+            'lu_par_client', 'lu_par_agent', 'via_email',
             'piece_jointe', 'piece_jointe_info',
-            'via_email',
-            'lu_par_client', 'lu_par_agent',
             'created_at', 'date_envoi', 'modifie_at',
         ]
         read_only_fields = [

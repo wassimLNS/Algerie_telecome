@@ -8,7 +8,7 @@ from datetime import timedelta
 
 from apps.tickets.models import Ticket, TypeService
 from apps.users.models import Utilisateur
-from apps.users.permissions import EstAdmin
+from apps.users.permissions import EstAdmin, EstAdminOuAdminIT
 
 
 # ============================================================
@@ -40,7 +40,7 @@ class StatsGeneralesView(APIView):
 
         # Stats globales
         total           = tickets.count()
-        ouverts         = tickets.filter(statut='ouvert').count()
+        ouverts         = tickets.filter(statut='soumis').count()
         en_cours        = tickets.filter(statut='en_cours').count()
         resolus         = tickets.filter(statut='resolu').count()
         fermes          = tickets.filter(statut='ferme').count()
@@ -96,23 +96,24 @@ class StatsGeneralesView(APIView):
 # PERFORMANCES DES AGENTS (admin)
 # ============================================================
 class PerformancesAgentsView(APIView):
-    permission_classes = [IsAuthenticated, EstAdmin]
+    permission_classes = [IsAuthenticated, EstAdminOuAdminIT]
 
     def get(self, request):
-        centre = request.user.centre
-        if not centre:
-            return Response({'error': 'Pas de centre associé'})
-
         service = request.query_params.get('service')
         agent_id = request.query_params.get('agent_id')
         start_date = request.query_params.get('start_date')
         end_date = request.query_params.get('end_date')
 
         agents = Utilisateur.objects.filter(
-            centre=centre,
             role__in=['agent', 'agent_technique', 'agent_annexe'],
             actif=True
         )
+
+        if request.user.role == 'admin':
+            centre = request.user.centre
+            if not centre:
+                return Response({'error': 'Pas de centre associé'})
+            agents = agents.filter(centre=centre)
         if agent_id:
             agents = agents.filter(id=agent_id)
 
@@ -130,7 +131,7 @@ class PerformancesAgentsView(APIView):
 
             resolus  = tickets.filter(statut__in=['resolu', 'ferme']).count()
             escalades = tickets.filter(statut__in=['escalade_technique', 'escalade_annexe']).count()
-            actifs   = tickets.filter(statut__in=['ouvert', 'en_cours']).count()
+            actifs   = tickets.filter(statut__in=['soumis', 'en_cours']).count()
 
             # Temps moyen de résolution en minutes
             temps_resolution = tickets.filter(
@@ -209,7 +210,7 @@ class ExportPDFView(APIView):
         data = [
             ['Indicateur', 'Valeur'],
             ['Total tickets',   tickets.count()],
-            ['Ouverts',         tickets.filter(statut='ouvert').count()],
+            ['Soumis',          tickets.filter(statut='soumis').count()],
             ['En cours',        tickets.filter(statut='en_cours').count()],
             ['Résolus',         tickets.filter(statut='resolu').count()],
             ['Fermés',          tickets.filter(statut='ferme').count()],

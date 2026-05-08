@@ -7,7 +7,6 @@ import uuid
 # ============================================================
 class StatutTicket(models.TextChoices):
     SOUMIS              = 'soumis',               'Soumis'
-    OUVERT              = 'ouvert',               'Ouvert'
     EN_COURS            = 'en_cours',             'En cours'
     ESCALADE_TECHNIQUE  = 'escalade_technique',   'Escaladé - Technique'
     ESCALADE_ANNEXE     = 'escalade_annexe',      'Escaladé - Annexe'
@@ -21,6 +20,11 @@ class PrioriteTicket(models.TextChoices):
     NORMALE  = 'normale',  'Normale'
     HAUTE    = 'haute',    'Haute'
     CRITIQUE = 'critique', 'Critique'
+
+
+class SourceTicket(models.TextChoices):
+    WEB   = 'web',   'Web'
+    EMAIL = 'email', 'Email'
 
 
 class TypeEscalade(models.TextChoices):
@@ -102,6 +106,11 @@ class Ticket(models.Model):
 
     # --- Attribution ---
     attribution_auto = models.BooleanField(default=True)
+
+    # --- Source (web ou email via n8n) ---
+    source       = models.CharField(max_length=10, choices=SourceTicket.choices, default=SourceTicket.WEB)
+    email_source = models.EmailField(null=True, blank=True, help_text="Email d'origine de la réclamation")
+    email_actif  = models.BooleanField(default=True, help_text="Relais email actif pour ce ticket")
 
     # --- Résolution ---
     resolution               = models.TextField(null=True, blank=True)

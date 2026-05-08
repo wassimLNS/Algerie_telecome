@@ -15,7 +15,7 @@ export default function LoginClient() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { login } = useContext(AuthContext);
-  
+
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -121,9 +121,7 @@ export default function LoginClient() {
 
         <CardFooter className="auth-view-footer">
           <div className="auth-footer-info">
-            <span>SERVICE CLIENT : 100</span>
-            <span className="auth-footer-separator">|</span>
-            <span>© 2024 ALGÉRIE TÉLÉCOM</span>
+            <span>© 2026 Algérie Télécom. Tous droits réservés.</span>
           </div>
           <div className="auth-footer-tagline">SÉCURISÉ PAR LA DIRECTION DIGITALE</div>
         </CardFooter>

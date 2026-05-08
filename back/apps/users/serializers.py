@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import authenticate
-from .models import Utilisateur, HistoriqueConnexion, Role, LigneTelephonique
+from .models import Utilisateur, HistoriqueConnexion, Role, LigneTelephonique, DemandeIT, StatutDemande
 
 
 # ============================================================
@@ -43,7 +43,7 @@ class LoginAgentSerializer(serializers.Serializer):
         try:
             user = Utilisateur.objects.get(
                 email=email,
-                role__in=[Role.AGENT, Role.AGENT_TECHNIQUE, Role.AGENT_ANNEXE, Role.ADMIN]
+                role__in=[Role.AGENT, Role.AGENT_TECHNIQUE, Role.AGENT_ANNEXE, Role.ADMIN, Role.ADMIN_IT]
             )
         except Utilisateur.DoesNotExist:
             raise serializers.ValidationError("Email introuvable.")
@@ -121,15 +121,26 @@ class CreerAgentSerializer(serializers.ModelSerializer):
         ]
 
     def validate_role(self, value):
-        roles_autorises = [Role.AGENT, Role.AGENT_TECHNIQUE, Role.AGENT_ANNEXE]
+        roles_autorises = [Role.AGENT, Role.AGENT_TECHNIQUE, Role.AGENT_ANNEXE, Role.ADMIN]
         if value not in roles_autorises:
-            raise serializers.ValidationError("Rôle invalide pour un agent.")
+            raise serializers.ValidationError("Rôle invalide.")
         return value
 
     def validate_email(self, value):
         if Utilisateur.objects.filter(email=value).exists():
             raise serializers.ValidationError("Cet email est déjà utilisé.")
         return value
+
+    def validate(self, data):
+        role = data.get('role')
+        centre = data.get('centre')
+        
+        if role == Role.ADMIN and centre:
+            # Check if there's already an active manager for this center
+            if Utilisateur.objects.filter(role=Role.ADMIN, centre=centre, actif=True).exists():
+                raise serializers.ValidationError({"role": "Ce centre a déjà un manager actif."})
+                
+        return data
 
     def create(self, validated_data):
         mot_de_passe = validated_data.pop('mot_de_passe')
@@ -154,10 +165,25 @@ class ModifierAgentSerializer(serializers.ModelSerializer):
         ]
 
     def validate_role(self, value):
-        roles_autorises = [Role.AGENT, Role.AGENT_TECHNIQUE, Role.AGENT_ANNEXE]
+        roles_autorises = [Role.AGENT, Role.AGENT_TECHNIQUE, Role.AGENT_ANNEXE, Role.ADMIN]
         if value not in roles_autorises:
-            raise serializers.ValidationError("Rôle invalide pour un agent.")
+            raise serializers.ValidationError("Rôle invalide.")
         return value
+
+    def validate(self, data):
+        role = data.get('role', getattr(self.instance, 'role', None))
+        centre = data.get('centre', getattr(self.instance, 'centre', None))
+        actif = data.get('actif', getattr(self.instance, 'actif', True))
+
+        if role == Role.ADMIN and centre and actif:
+            # Check if there's already an active manager for this center
+            query = Utilisateur.objects.filter(role=Role.ADMIN, centre=centre, actif=True)
+            if self.instance:
+                query = query.exclude(pk=self.instance.pk)
+            if query.exists():
+                raise serializers.ValidationError({"role": "Ce centre a déjà un manager actif."})
+                
+        return data
 
 
 # ============================================================
@@ -179,7 +205,7 @@ class AgentListSerializer(serializers.ModelSerializer):
 
     def get_tickets_actifs(self, obj):
         return obj.tickets_agent.filter(
-            statut__in=['ouvert', 'en_cours']
+            statut__in=['soumis', 'en_cours']
         ).count()
 
 
@@ -198,3 +224,42 @@ class HistoriqueConnexionSerializer(serializers.ModelSerializer):
             'succes', 'raison_echec',
             'connecte_a', 'deconnecte_a',
         ]
+
+
+# ============================================================
+# DEMANDES IT
+# ============================================================
+class DemandeITSerializer(serializers.ModelSerializer):
+    demandeur_nom = serializers.SerializerMethodField()
+    centre_nom = serializers.CharField(source='centre.nom', read_only=True, default=None)
+    approuve_par_nom = serializers.SerializerMethodField()
+    traite_par_nom = serializers.SerializerMethodField()
+    priorite_label = serializers.CharField(source='get_priorite_display', read_only=True)
+    statut_label = serializers.CharField(source='get_statut_display', read_only=True)
+
+    class Meta:
+        model = DemandeIT
+        fields = [
+            'id', 'demandeur', 'demandeur_nom', 'centre', 'centre_nom',
+            'sujet', 'description', 'priorite', 'priorite_label',
+            'statut', 'statut_label',
+            'reponse_admin', 'approuve_par', 'approuve_par_nom',
+            'reponse_it', 'traite_par', 'traite_par_nom',
+            'created_at', 'updated_at',
+        ]
+
+    def get_demandeur_nom(self, obj):
+        return f"{obj.demandeur.prenom} {obj.demandeur.nom}" if obj.demandeur else None
+
+    def get_approuve_par_nom(self, obj):
+        return f"{obj.approuve_par.prenom} {obj.approuve_par.nom}" if obj.approuve_par else None
+
+    def get_traite_par_nom(self, obj):
+        return f"{obj.traite_par.prenom} {obj.traite_par.nom}" if obj.traite_par else None
+
+
+class CreerDemandeSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = DemandeIT
+        fields = ['sujet', 'description', 'priorite']

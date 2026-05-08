@@ -9,6 +9,7 @@ import { AgentManagement } from '@/components/features/admin/AgentManagement';
 import { AdminAssignment } from '@/components/features/admin/AdminAssignment';
 import { AdminHistory } from '@/components/features/admin/AdminHistory';
 import { AdminSessions } from '@/components/features/admin/AdminSessions';
+import { DemandesAdmin } from '@/components/features/admin/DemandesAdmin';
 import { Cpu, Activity, Search, UserCircle, Filter, Calendar as CalendarIcon, X, FileDown, FileSpreadsheet, Loader2, MessageSquare, Eye } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
@@ -307,15 +308,15 @@ export default function AdminView() {
       )}
 
       {activeTab === 'agents' && (
-        <AgentManagement agents={agents} performances={performances} onRefresh={fetchAll} onAuditAgent={handleAuditAgent} />
+        <AgentManagement agents={agents} performances={performances} onRefresh={fetchAll} onAuditAgent={handleAuditAgent} readOnly={true} />
       )}
 
       {activeTab === 'history' && (
         <AdminHistory tickets={tickets} />
       )}
 
-      {activeTab === 'sessions' && (
-        <AdminSessions sessions={sessions} />
+      {activeTab === 'demandes' && (
+        <DemandesAdmin />
       )}
 
       {/* ─── Audit Modal ─── */}
