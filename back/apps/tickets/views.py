@@ -111,11 +111,17 @@ class TicketsEscaladesView(APIView):
     permission_classes = [IsAuthenticated, EstAgentEscalade]
 
     def get(self, request):
-        if request.user.role == 'agent_technique':
-            tickets = Ticket.objects.filter(centre=request.user.centre, statut='escalade_technique').order_by('-created_at')
+        agent = request.user
+        if agent.role == 'agent_technique':
+            tickets = Ticket.objects.filter(centre=agent.centre, statut='escalade_technique')
         else:
-            tickets = Ticket.objects.filter(centre=request.user.centre, statut='escalade_annexe').order_by('-created_at')
-        return Response(TicketListSerializer(tickets, many=True).data)
+            tickets = Ticket.objects.filter(centre=agent.centre, statut='escalade_annexe')
+
+        # Filtrer par commune si l'agent a une commune définie
+        if agent.commune:
+            tickets = tickets.filter(client__commune__iexact=agent.commune)
+
+        return Response(TicketListSerializer(tickets.order_by('-created_at'), many=True).data)
 
 
 class TicketHistoriqueClientView(APIView):

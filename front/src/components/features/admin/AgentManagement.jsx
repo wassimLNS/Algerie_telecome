@@ -31,11 +31,12 @@ export function AgentManagement({ agents = [], performances: rawPerformances = [
   const performances = Array.isArray(rawPerformances) ? rawPerformances : [];
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({
-    nom: '', prenom: '', email: '', telephone: '', role: 'agent', mot_de_passe: '', centre: ''
+    nom: '', prenom: '', email: '', telephone: '', role: 'agent', mot_de_passe: '', centre: '', commune: ''
   });
   const [centres, setCentres] = useState([]);
   const [filterRole, setFilterRole] = useState('');
   const [filterCentre, setFilterCentre] = useState('');
+  const [filterCommune, setFilterCommune] = useState('');
 
   useEffect(() => {
     if (!readOnly) {
@@ -96,7 +97,7 @@ export function AgentManagement({ agents = [], performances: rawPerformances = [
     try {
       await createAgent(formData);
       setShowModal(false);
-      setFormData({ nom: '', prenom: '', email: '', telephone: '', role: 'agent', mot_de_passe: '', centre: '' });
+      setFormData({ nom: '', prenom: '', email: '', telephone: '', role: 'agent', mot_de_passe: '', centre: '', commune: '' });
       setFieldErrors({});
       if (onRefresh) onRefresh();
     } catch (err) {
@@ -120,6 +121,7 @@ export function AgentManagement({ agents = [], performances: rawPerformances = [
       telephone: agent.telephone || '',
       role: agent.role || 'agent',
       centre: agent.centre || '',
+      commune: agent.commune || '',
       actif: agent.actif !== false,
     });
     setEditError('');
@@ -188,6 +190,9 @@ export function AgentManagement({ agents = [], performances: rawPerformances = [
   if (filterCentre) {
     agentsWithPerf = agentsWithPerf.filter(a => String(a.centre) === String(filterCentre));
   }
+  if (filterCommune) {
+    agentsWithPerf = agentsWithPerf.filter(a => a.commune === filterCommune);
+  }
 
   return (
     <>
@@ -198,7 +203,7 @@ export function AgentManagement({ agents = [], performances: rawPerformances = [
         <div className="flex items-center gap-3 px-2 flex-wrap">
           <div className="flex items-center gap-2">
             <Filter className="w-4 h-4 text-slate-400" />
-            <select value={filterRole} onChange={(e) => setFilterRole(e.target.value)}
+            <select value={filterRole} onChange={(e) => { setFilterRole(e.target.value); setFilterCommune(''); }}
               className="px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold bg-white cursor-pointer focus:ring-2 focus:ring-[#0055A4]/30 focus:outline-none">
               <option value="">Tous les rôles</option>
               <option value="agent">Agent Support</option>
@@ -209,12 +214,24 @@ export function AgentManagement({ agents = [], performances: rawPerformances = [
           </div>
           <div className="flex items-center gap-2">
             <Building2 className="w-4 h-4 text-slate-400" />
-            <select value={filterCentre} onChange={(e) => setFilterCentre(e.target.value)}
+            <select value={filterCentre} onChange={(e) => { setFilterCentre(e.target.value); setFilterCommune(''); }}
               className="px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold bg-white cursor-pointer focus:ring-2 focus:ring-[#0055A4]/30 focus:outline-none">
               <option value="">Tous les centres</option>
               {centres.map(c => <option key={c.id} value={c.id}>{c.nom}</option>)}
             </select>
           </div>
+          {(filterRole === 'agent_technique' || filterRole === 'agent_annexe') && filterCentre && (
+          <div className="flex items-center gap-2">
+            <MapPin className="w-4 h-4 text-slate-400" />
+            <select value={filterCommune} onChange={(e) => setFilterCommune(e.target.value)}
+              className="px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold bg-white cursor-pointer focus:ring-2 focus:ring-[#0055A4]/30 focus:outline-none">
+              <option value="">Toutes les communes</option>
+              {(centres.find(c => String(c.id) === String(filterCentre))?.communes || []).map(com => (
+                <option key={com} value={com}>{com}</option>
+              ))}
+            </select>
+          </div>
+          )}
           <div className="ml-auto">
           <Button
             onClick={() => setShowModal(true)}
@@ -401,6 +418,20 @@ export function AgentManagement({ agents = [], performances: rawPerformances = [
                 </select>
                 {fieldErrors.centre && <p className="text-[10px] font-bold text-red-500 mt-1">{fieldErrors.centre}</p>}
               </div>
+              {(formData.role === 'agent_technique' || formData.role === 'agent_annexe') && (
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase text-slate-500 block">Commune de Travail</label>
+                <select value={formData.commune}
+                  onChange={(e) => setFormData(prev => ({ ...prev, commune: e.target.value }))}
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#0055A4]/30 bg-white cursor-pointer">
+                  <option value="">— Sélectionner une commune —</option>
+                  {(centres.find(c => String(c.id) === String(formData.centre))?.communes || []).map(com => (
+                    <option key={com} value={com}>{com}</option>
+                  ))}
+                </select>
+                <p className="text-[9px] font-bold text-slate-400">Zone géographique couverte par cet agent</p>
+              </div>
+              )}
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase text-slate-500 block">Mot de Passe</label>
                 <input type="password" value={formData.mot_de_passe} placeholder="Minimum 8 caractères"
@@ -521,6 +552,20 @@ export function AgentManagement({ agents = [], performances: rawPerformances = [
                   </select>
                   {editFieldErrors.centre && <p className="text-[10px] font-bold text-red-500 mt-1">{editFieldErrors.centre}</p>}
                 </div>
+                {(editData.role === 'agent_technique' || editData.role === 'agent_annexe') && (
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase text-slate-500 block">Commune de Travail</label>
+                  <select value={editData.commune}
+                    onChange={(e) => setEditData(prev => ({ ...prev, commune: e.target.value }))}
+                    className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#0055A4]/30 bg-white cursor-pointer">
+                    <option value="">— Sélectionner une commune —</option>
+                    {(centres.find(c => String(c.id) === String(editData.centre))?.communes || []).map(com => (
+                      <option key={com} value={com}>{com}</option>
+                    ))}
+                  </select>
+                  <p className="text-[9px] font-bold text-slate-400">Zone géographique couverte par cet agent</p>
+                </div>
+                )}
               </div>
               {/* Toggle Actif/Inactif */}
               <div className="flex items-center justify-between p-4 rounded-xl border border-slate-200 bg-slate-50/50">

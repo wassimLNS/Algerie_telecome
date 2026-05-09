@@ -13,6 +13,7 @@ class CentreDistribution(models.Model):
     telephone    = models.CharField(max_length=20, null=True, blank=True)
     email        = models.EmailField(null=True, blank=True)
     prefixes_tel = models.JSONField(default=list)                  # ex: ["0561", "0562"]
+    communes     = models.JSONField(default=list, blank=True)       # ex: ["Bab El Oued", "Hussein Dey"]
     actif        = models.BooleanField(default=True)
     created_at   = models.DateTimeField(auto_now_add=True)
 
