@@ -3,7 +3,7 @@ import { getCentres, createCentre, updateCentre, deleteCentre } from '@/api/admi
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Search, Edit2, Trash2, MapPin, Phone, Mail, Loader2, Server } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, MapPin, Phone, Mail, Loader2, Server, X } from 'lucide-react';
 
 export function CentreManagement() {
   const [centres, setCentres] = useState([]);
@@ -22,7 +22,9 @@ export function CentreManagement() {
     telephone: '',
     email: '',
     prefixes_tel: '',
+    communes: [],
   });
+  const [newCommune, setNewCommune] = useState('');
 
   const fetchCentres = async () => {
     setLoading(true);
@@ -52,13 +54,15 @@ export function CentreManagement() {
         telephone: centre.telephone || '',
         email: centre.email || '',
         prefixes_tel: centre.prefixes_tel || '',
+        communes: centre.communes || [],
       });
     } else {
       setEditingCentre(null);
       setFormData({
-        code: '', nom: '', wilaya: '', adresse: '', telephone: '', email: '', prefixes_tel: ''
+        code: '', nom: '', wilaya: '', adresse: '', telephone: '', email: '', prefixes_tel: '', communes: []
       });
     }
+    setNewCommune('');
     setShowModal(true);
   };
 
@@ -156,6 +160,10 @@ export function CentreManagement() {
                     <p className="text-[10px] font-black text-slate-400 uppercase">Tickets</p>
                     <p className="text-sm font-black text-emerald-600">{centre.nombre_tickets_actifs}</p>
                   </div>
+                  <div className="text-center">
+                    <p className="text-[10px] font-black text-slate-400 uppercase">Communes</p>
+                    <p className="text-sm font-black text-purple-600">{(centre.communes || []).length}</p>
+                  </div>
                 </div>
                 <div className="flex gap-2">
                   <button onClick={() => handleOpenModal(centre)} className="p-2 bg-slate-100 text-slate-600 hover:bg-[#0055A4] hover:text-white rounded-xl transition-colors cursor-pointer">
@@ -219,6 +227,46 @@ export function CentreManagement() {
                 <label className="text-[10px] font-black text-slate-500 uppercase mb-1 block">Préfixes téléphoniques</label>
                 <Input value={formData.prefixes_tel} onChange={e => setFormData({...formData, prefixes_tel: e.target.value})} placeholder="Ex: 021,023 (Séparés par virgule)" />
                 <p className="text-[9px] text-slate-400 mt-1 font-semibold">Optionnel, sert à l'attribution automatique des tickets.</p>
+              </div>
+
+              <div>
+                <label className="text-[10px] font-black text-slate-500 uppercase mb-2 block">Communes couvertes ({formData.communes.length})</label>
+                <div className="flex gap-2 mb-2">
+                  <Input value={newCommune} onChange={e => setNewCommune(e.target.value)}
+                    placeholder="Nom de la commune..."
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        const val = newCommune.trim();
+                        if (val && !formData.communes.includes(val)) {
+                          setFormData({...formData, communes: [...formData.communes, val].sort()});
+                          setNewCommune('');
+                        }
+                      }
+                    }} />
+                  <Button type="button" onClick={() => {
+                    const val = newCommune.trim();
+                    if (val && !formData.communes.includes(val)) {
+                      setFormData({...formData, communes: [...formData.communes, val].sort()});
+                      setNewCommune('');
+                    }
+                  }} className="bg-[#0055A4] hover:bg-[#004080] text-white rounded-xl px-4 shrink-0">
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                </div>
+                {formData.communes.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto p-2 bg-slate-50 rounded-xl border border-slate-100">
+                    {formData.communes.map((c, i) => (
+                      <span key={i} className="inline-flex items-center gap-1 px-2.5 py-1 bg-white border border-slate-200 rounded-lg text-[11px] font-bold text-slate-700 hover:border-red-300 group transition-colors">
+                        {c}
+                        <button type="button" onClick={() => setFormData({...formData, communes: formData.communes.filter((_, idx) => idx !== i)})}
+                          className="text-slate-300 group-hover:text-red-500 cursor-pointer transition-colors">
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="pt-4 flex gap-3">

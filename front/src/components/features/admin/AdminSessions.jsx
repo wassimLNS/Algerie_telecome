@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ShieldAlert, UserCircle, Globe, Laptop, CheckCircle2, XCircle } from 'lucide-react';
+import { ShieldAlert, UserCircle, Globe, Laptop, CheckCircle2, XCircle, Filter, Building2, MapPin } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getCentres } from '@/api/admin';
 
 export function AdminSessions({ sessions = [] }) {
   const { t } = useTranslation();
@@ -26,7 +27,64 @@ export function AdminSessions({ sessions = [] }) {
     return `${browser} sur ${os}`;
   };
 
+  const [centres, setCentres] = useState([]);
+  const [filterRole, setFilterRole] = useState('');
+  const [filterCentre, setFilterCentre] = useState('');
+  const [filterCommune, setFilterCommune] = useState('');
+
+  useEffect(() => {
+    getCentres().then(data => setCentres(data)).catch(err => console.error(err));
+  }, []);
+
+  let filteredSessions = sessions;
+  if (filterRole) {
+    filteredSessions = filteredSessions.filter(s => s.utilisateur_role === filterRole);
+  }
+  if (filterCentre) {
+    filteredSessions = filteredSessions.filter(s => String(s.utilisateur_centre) === String(filterCentre));
+  }
+  if (filterCommune) {
+    filteredSessions = filteredSessions.filter(s => s.utilisateur_commune === filterCommune);
+  }
+
   return (
+    <div className="space-y-6">
+      <div className="flex items-center gap-3 px-2 flex-wrap">
+        <div className="flex items-center gap-2">
+          <Filter className="w-4 h-4 text-slate-400" />
+          <select value={filterRole} onChange={(e) => { setFilterRole(e.target.value); setFilterCommune(''); }}
+            className="px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold bg-white cursor-pointer focus:ring-2 focus:ring-[#0055A4]/30 focus:outline-none">
+            <option value="">Tous les rôles</option>
+            <option value="agent">Agent Support</option>
+            <option value="agent_technique">Agent Technique</option>
+            <option value="agent_annexe">Agent Annexe</option>
+            <option value="admin">Manager</option>
+            <option value="admin_it">Admin IT</option>
+            <option value="client">Client</option>
+          </select>
+        </div>
+        <div className="flex items-center gap-2">
+          <Building2 className="w-4 h-4 text-slate-400" />
+          <select value={filterCentre} onChange={(e) => { setFilterCentre(e.target.value); setFilterCommune(''); }}
+            className="px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold bg-white cursor-pointer focus:ring-2 focus:ring-[#0055A4]/30 focus:outline-none">
+            <option value="">Tous les centres</option>
+            {centres.map(c => <option key={c.id} value={c.id}>{c.nom}</option>)}
+          </select>
+        </div>
+        {(filterRole === 'agent_technique' || filterRole === 'agent_annexe') && filterCentre && (
+        <div className="flex items-center gap-2">
+          <MapPin className="w-4 h-4 text-slate-400" />
+          <select value={filterCommune} onChange={(e) => setFilterCommune(e.target.value)}
+            className="px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold bg-white cursor-pointer focus:ring-2 focus:ring-[#0055A4]/30 focus:outline-none">
+            <option value="">Toutes les communes</option>
+            {(centres.find(c => String(c.id) === String(filterCentre))?.communes || []).map(com => (
+              <option key={com} value={com}>{com}</option>
+            ))}
+          </select>
+        </div>
+        )}
+      </div>
+
     <Card className="rounded-[2rem] shadow-2xl bg-white overflow-hidden">
       <CardHeader className="border-b bg-slate-50/50 p-8 flex flex-row items-center gap-6">
         <div className="bg-white p-3 rounded-2xl shadow-xl border border-slate-100 text-purple-600">
@@ -49,14 +107,14 @@ export function AdminSessions({ sessions = [] }) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {sessions.length === 0 ? (
+            {filteredSessions.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5} className="h-40 text-center text-slate-400 font-bold uppercase text-[10px]">
                   {t('portal.no_tickets')}
                 </TableCell>
               </TableRow>
             ) : (
-              sessions.map((session, index) => (
+              filteredSessions.map((session, index) => (
                 <TableRow key={index} className="h-20 hover:bg-slate-50 transition-all">
                   <TableCell className="pl-10">
                     <div className="flex items-center gap-3">
@@ -107,5 +165,6 @@ export function AdminSessions({ sessions = [] }) {
         </Table>
       </CardContent>
     </Card>
+    </div>
   );
 }

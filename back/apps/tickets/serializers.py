@@ -198,12 +198,49 @@ class CreerEscaladeSerializer(serializers.Serializer):
     def create(self, validated_data):
         ticket       = self.context['ticket']
         agent_source = self.context['request'].user
-        if validated_data['type_escalade'] == 'technique':
+        type_esc     = validated_data['type_escalade']
+
+        if type_esc == 'technique':
             ticket.statut = StatutTicket.ESCALADE_TECHNIQUE
+            target_role = 'agent_technique'
         else:
             ticket.statut = StatutTicket.ESCALADE_ANNEXE
+            target_role = 'agent_annexe'
+
+        # Auto-attribution par commune du client
+        from apps.users.models import Utilisateur
+        from django.db.models import Count, Q
+
+        client_commune = ticket.client.commune
+        centre = ticket.centre
+
+        # Chercher un agent du bon rôle dans le même centre
+        candidates = Utilisateur.objects.filter(
+            role=target_role, centre=centre, actif=True
+        )
+
+        # Priorité : même commune que le client
+        if client_commune:
+            commune_match = candidates.filter(commune__iexact=client_commune)
+            if commune_match.exists():
+                candidates = commune_match
+
+        # Sélectionner le moins chargé
+        agent_cible = candidates.annotate(
+            nb_actifs=Count('tickets_agent', filter=Q(tickets_agent__statut__in=['soumis', 'en_cours', 'escalade_technique', 'escalade_annexe']))
+        ).order_by('nb_actifs').first()
+
+        if agent_cible:
+            if type_esc == 'technique':
+                ticket.agent_technique = agent_cible
+            else:
+                ticket.agent_annexe = agent_cible
+
         ticket.save()
-        escalade = Escalade.objects.create(ticket=ticket, agent_source=agent_source, **validated_data)
+        escalade = Escalade.objects.create(
+            ticket=ticket, agent_source=agent_source,
+            agent_cible=agent_cible, **validated_data
+        )
 
         # Notification email au client
         try:

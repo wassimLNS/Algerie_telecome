@@ -199,6 +199,7 @@ class AgentListSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'nom', 'prenom', 'email', 'telephone',
             'role', 'centre', 'centre_nom',
+            'wilaya', 'commune',
             'actif', 'created_at', 'derniere_connexion',
             'tickets_actifs',
         ]
@@ -215,11 +216,14 @@ class AgentListSerializer(serializers.ModelSerializer):
 class HistoriqueConnexionSerializer(serializers.ModelSerializer):
 
     utilisateur_nom = serializers.CharField(source='utilisateur.__str__', read_only=True)
+    utilisateur_role = serializers.CharField(source='utilisateur.role', read_only=True)
+    utilisateur_centre = serializers.CharField(source='utilisateur.centre_id', read_only=True)
+    utilisateur_commune = serializers.CharField(source='utilisateur.commune', read_only=True)
 
     class Meta:
         model  = HistoriqueConnexion
         fields = [
-            'id', 'utilisateur', 'utilisateur_nom',
+            'id', 'utilisateur', 'utilisateur_nom', 'utilisateur_role', 'utilisateur_centre', 'utilisateur_commune',
             'ip_adresse', 'user_agent',
             'succes', 'raison_echec',
             'connecte_a', 'deconnecte_a',

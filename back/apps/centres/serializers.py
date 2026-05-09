@@ -14,7 +14,7 @@ class CentreDistributionSerializer(serializers.ModelSerializer):
         model  = CentreDistribution
         fields = [
             'id', 'code', 'nom', 'wilaya', 'adresse',
-            'telephone', 'email', 'prefixes_tel', 'actif',
+            'telephone', 'email', 'prefixes_tel', 'communes', 'actif',
             'created_at', 'nombre_agents', 'nombre_tickets_actifs',
         ]
         read_only_fields = ['id', 'created_at']
