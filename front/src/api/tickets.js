@@ -89,6 +89,12 @@ export const getEscalatedTickets = async () => {
   return response.data;
 };
 
+// Return ticket to original agent (tech/annexe only)
+export const returnTicket = async (ticketId, commentaire = '') => {
+  const response = await api.post(`/tickets/escalades/${ticketId}/retourner/`, { commentaire });
+  return response.data;
+};
+
 // ─── ADMIN APIs ───
 
 // Get all tickets (admin)
