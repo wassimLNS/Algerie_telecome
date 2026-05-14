@@ -59,6 +59,10 @@ class MessagesTicketView(APIView):
 
         messages = ticket.messages.all().order_by('created_at')
 
+        # Clients ne voient pas les messages internes
+        if request.user.role == 'client':
+            messages = messages.filter(interne=False)
+
         # Marquer les messages comme lus
         if request.user.role == 'client':
             messages.filter(lu_par_client=False).exclude(
