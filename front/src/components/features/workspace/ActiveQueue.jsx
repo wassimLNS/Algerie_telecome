@@ -16,8 +16,7 @@ export function ActiveQueue({ tickets, onOpenTicket, isHistory = false }) {
     resolu: { label: t('portal.resolved'), color: 'bg-emerald-100 text-emerald-800' },
     ferme: { label: t('portal.closed'), color: 'bg-slate-100 text-slate-600' },
     rejete: { label: t('portal.rejected'), color: 'bg-red-100 text-red-800' },
-    escalade_technique: { label: 'Escalade Tech.', color: 'bg-purple-100 text-purple-800' },
-    escalade_annexe: { label: 'Escalade Annexe', color: 'bg-orange-100 text-orange-800' },
+    escalade: { label: 'Escalad\u00e9', color: 'bg-purple-100 text-purple-800' },
   };
 
   const PRIORITY_MAP = {

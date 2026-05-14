@@ -16,8 +16,7 @@ export function AdminHistory({ tickets = [] }) {
     resolu:              { label: t('portal.resolved'),    cls: 'bg-emerald-100 text-emerald-800' },
     ferme:               { label: t('portal.closed'),      cls: 'bg-slate-100 text-slate-600' },
     rejete:              { label: t('portal.rejected'),    cls: 'bg-red-100 text-red-800' },
-    escalade_technique:  { label: 'Escalade Tech.',        cls: 'bg-purple-100 text-purple-800' },
-    escalade_annexe:     { label: 'Escalade Annexe',       cls: 'bg-orange-100 text-orange-800' },
+    escalade:            { label: 'Escalad\u00e9',              cls: 'bg-purple-100 text-purple-800' },
   };
 
   const filtered = tickets.filter(t => {

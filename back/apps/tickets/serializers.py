@@ -139,9 +139,8 @@ class MettreAJourTicketSerializer(serializers.ModelSerializer):
         ticket = self.instance
         transitions = {
             'soumis': ['en_cours', 'resolu', 'rejete'], 
-            'en_cours': ['resolu', 'escalade_technique', 'escalade_annexe', 'rejete'], 
-            'escalade_technique': ['resolu', 'ferme'], 
-            'escalade_annexe': ['resolu', 'ferme'], 
+            'en_cours': ['resolu', 'escalade', 'rejete'], 
+            'escalade': ['resolu', 'ferme'], 
             'resolu': ['ferme']
         }
         autorises = transitions.get(ticket.statut, [])
@@ -200,11 +199,10 @@ class CreerEscaladeSerializer(serializers.Serializer):
         agent_source = self.context['request'].user
         type_esc     = validated_data['type_escalade']
 
+        ticket.statut = StatutTicket.ESCALADE
         if type_esc == 'technique':
-            ticket.statut = StatutTicket.ESCALADE_TECHNIQUE
             target_role = 'agent_technique'
         else:
-            ticket.statut = StatutTicket.ESCALADE_ANNEXE
             target_role = 'agent_annexe'
 
         # Auto-attribution par commune du client
@@ -227,7 +225,7 @@ class CreerEscaladeSerializer(serializers.Serializer):
 
         # Sélectionner le moins chargé
         agent_cible = candidates.annotate(
-            nb_actifs=Count('tickets_agent', filter=Q(tickets_agent__statut__in=['soumis', 'en_cours', 'escalade_technique', 'escalade_annexe']))
+            nb_actifs=Count('tickets_agent', filter=Q(tickets_agent__statut__in=['soumis', 'en_cours', 'escalade']))
         ).order_by('nb_actifs').first()
 
         if agent_cible:

@@ -8,8 +8,7 @@ import uuid
 class StatutTicket(models.TextChoices):
     SOUMIS              = 'soumis',               'Soumis'
     EN_COURS            = 'en_cours',             'En cours'
-    ESCALADE_TECHNIQUE  = 'escalade_technique',   'Escaladé - Technique'
-    ESCALADE_ANNEXE     = 'escalade_annexe',      'Escaladé - Annexe'
+    ESCALADE            = 'escalade',             'Escaladé'
     RESOLU              = 'resolu',               'Résolu'
     FERME               = 'ferme',                'Fermé'
     REJETE              = 'rejete',               'Rejeté'

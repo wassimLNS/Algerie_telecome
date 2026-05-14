@@ -28,9 +28,9 @@ def verifier_acces_ticket(user, ticket):
     elif user.role == 'agent':
         return ticket.agent == user
     elif user.role == 'agent_technique':
-        return ticket.agent_technique == user or ticket.statut == 'escalade_technique'
+        return ticket.agent_technique == user or ticket.statut == 'escalade'
     elif user.role == 'agent_annexe':
-        return ticket.agent_annexe == user or ticket.statut == 'escalade_annexe'
+        return ticket.agent_annexe == user or ticket.statut == 'escalade'
     elif user.role == 'admin':
         return ticket.centre == user.centre
     return False

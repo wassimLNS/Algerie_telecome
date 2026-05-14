@@ -10,14 +10,14 @@ import {
 import { cn } from '@/lib/utils';
 
 const STATUS_COLORS = {
-  soumis: '#6366f1', en_cours: '#f59e0b', escalade_technique: '#8b5cf6',
-  escalade_annexe: '#f97316', resolu: '#10b981', ferme: '#64748b', rejete: '#ef4444',
+  soumis: '#6366f1', en_cours: '#f59e0b', escalade: '#8b5cf6',
+  resolu: '#10b981', ferme: '#64748b', rejete: '#ef4444',
 };
 const PRIORITY_COLORS = { critique: '#ef4444', haute: '#f97316', normale: '#3b82f6', basse: '#94a3b8' };
 
 const STATUS_LABELS = {
-  soumis: 'Nouveau', en_cours: 'En cours', escalade_technique: 'Esc. Tech.',
-  escalade_annexe: 'Esc. Annexe', resolu: 'Résolu', ferme: 'Fermé', rejete: 'Rejeté'
+  soumis: 'Nouveau', en_cours: 'En cours', escalade: 'Escaladé',
+  resolu: 'Résolu', ferme: 'Fermé', rejete: 'Rejeté'
 };
 const PRIORITY_LABELS = { critique: 'Critique', haute: 'Haute', normale: 'Normale', basse: 'Basse' };
 

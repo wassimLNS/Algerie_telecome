@@ -77,8 +77,7 @@ def notifier_changement_statut(ticket):
     statut_labels = {
         'soumis':             'Soumis',
         'en_cours':           'En cours de traitement',
-        'escalade_technique': 'Escaladé vers un technicien',
-        'escalade_annexe':    'Escaladé vers le service annexe',
+        'escalade': 'Escaladé',
         'resolu':             'Résolu',
         'ferme':              'Fermé',
         'rejete':             'Rejeté',
