@@ -289,6 +289,7 @@ class RetournerTicketView(APIView):
             ticket=ticket,
             expediteur=agent,
             contenu=note,
+            interne=True,
         )
 
         return Response({

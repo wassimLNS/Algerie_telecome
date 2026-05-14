@@ -653,18 +653,6 @@ export default function WorkspaceView({ agentRole = 'agent' }) {
                     Renvoyer à l'agent
                   </Button>
                 </div>
-                <div className="workspace-reply-form mt-2">
-                  <Textarea
-                    placeholder="Message à l'agent d'origine..."
-                    className="workspace-reply-input"
-                    value={replyText}
-                    onChange={(e) => setReplyText(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(); } }}
-                  />
-                  <Button className="workspace-send-btn" onClick={handleSendMessage} disabled={!replyText.trim()}>
-                    <Send className="w-7 h-7" />
-                  </Button>
-                </div>
               </div>
             )}
           </CardContent>
