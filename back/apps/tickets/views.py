@@ -256,3 +256,42 @@ class ToggleEmailView(APIView):
             'email_actif': ticket.email_actif,
             'message': f"Relais email {'activé' if ticket.email_actif else 'désactivé'}"
         })
+
+
+class RetournerTicketView(APIView):
+    """Permet à un agent technique/annexe de renvoyer le ticket vers l'agent d'origine"""
+    permission_classes = [IsAuthenticated, EstAgentEscalade]
+
+    def post(self, request, ticket_id):
+        agent = request.user
+        try:
+            if agent.role == 'agent_technique':
+                ticket = Ticket.objects.get(id=ticket_id, centre=agent.centre, statut='escalade_technique')
+            elif agent.role == 'agent_annexe':
+                ticket = Ticket.objects.get(id=ticket_id, centre=agent.centre, statut='escalade_annexe')
+            else:
+                return Response({'error': 'Action non autorisée'}, status=status.HTTP_403_FORBIDDEN)
+        except Ticket.DoesNotExist:
+            return Response({'error': 'Ticket introuvable'}, status=status.HTTP_404_NOT_FOUND)
+
+        commentaire = request.data.get('commentaire', '')
+
+        # Remettre le ticket en_cours chez l'agent d'origine
+        ticket.statut = 'en_cours'
+        ticket.save(update_fields=['statut'])
+
+        # Créer un message système dans le chat pour tracer le retour
+        from apps.chat.models import Message
+        note = f"📋 Ticket renvoyé par {agent.prenom} {agent.nom} ({agent.get_role_display()})."
+        if commentaire:
+            note += f"\n💬 Commentaire : {commentaire}"
+        Message.objects.create(
+            ticket=ticket,
+            expediteur=agent,
+            contenu=note,
+        )
+
+        return Response({
+            'message': 'Ticket renvoyé à l\'agent d\'origine.',
+            'ticket': TicketDetailSerializer(ticket).data
+        })

@@ -1,14 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MessageSquare, Clock, Trash2 } from 'lucide-react';
+import { MessageSquare, Clock, Trash2, Filter } from 'lucide-react';
 import { deleteTicket } from '@/api/tickets';
 import { cn } from '@/lib/utils';
 
 export function CustomerTicketList({ tickets, loading, onSelectTicket, onTicketDeleted }) {
   const { t } = useTranslation();
+  const [filterStatus, setFilterStatus] = useState('');
 
   const STATUS_MAP = {
     soumis: { label: 'Nouveau', color: 'bg-indigo-100 text-indigo-700' },
@@ -36,9 +37,25 @@ export function CustomerTicketList({ tickets, loading, onSelectTicket, onTicketD
     );
   }
 
+  const filteredTickets = filterStatus ? tickets.filter(t => t.statut === filterStatus) : tickets;
+
   return (
+    <div className="space-y-6">
+      {/* Filter bar */}
+      <div className="flex items-center gap-3 flex-wrap">
+        <Filter className="w-4 h-4 text-slate-400" />
+        <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}
+          className="px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-bold bg-white cursor-pointer focus:ring-2 focus:ring-[#0055A4]/30 focus:outline-none">
+          <option value="">Tous les statuts</option>
+          {Object.entries(STATUS_MAP).map(([key, val]) => (
+            <option key={key} value={key}>{val.label}</option>
+          ))}
+        </select>
+        <span className="text-[10px] font-black text-slate-400 uppercase">{filteredTickets.length} r&eacute;clamation(s)</span>
+      </div>
+
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-      {tickets.map(ticket => {
+      {filteredTickets.map(ticket => {
         const statusInfo = STATUS_MAP[ticket.statut] || STATUS_MAP.soumis;
         const ticketRef = ticket.numero_ticket || `REQ-${String(ticket.id).padStart(3, '0')}`;
         const dateStr = ticket.created_at
@@ -107,6 +124,7 @@ export function CustomerTicketList({ tickets, loading, onSelectTicket, onTicketD
           </Card>
         );
       })}
+    </div>
     </div>
   );
 }

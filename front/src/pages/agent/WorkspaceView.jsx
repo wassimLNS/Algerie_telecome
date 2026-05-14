@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext, useMemo, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { AuthContext } from '@/contexts/AuthContext';
-import { getAgentTickets, getAgentTicketDetail, updateTicketStatus, escalateTicket, getEscalatedTickets, getTicketClientHistory, toggleEmailRelay } from '@/api/tickets';
+import { getAgentTickets, getAgentTicketDetail, updateTicketStatus, escalateTicket, getEscalatedTickets, getTicketClientHistory, toggleEmailRelay, returnTicket } from '@/api/tickets';
 import { getMessages, sendMessage as sendMessageAPI, getAISummary } from '@/api/chat';
 import { useWebSocket } from '@/hooks/useWebSocket';
 import { AgentDashboard } from '@/components/features/workspace/AgentDashboard';
@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
-  Search, Activity, Cpu, X, Send, CheckCircle2, ArrowUpCircle,
+  Search, Activity, Cpu, X, Send, CheckCircle2, ArrowUpCircle, ArrowDownCircle,
   BrainCircuit, Loader2, User, Phone, Info, ShieldAlert, MapPin, FileText, Paperclip, Eye, Calendar, Mail, MailX, ChevronDown, ChevronUp
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -179,17 +179,41 @@ export default function WorkspaceView({ agentRole = 'agent' }) {
     }
   };
 
+  // Return ticket to original agent (tech/annexe)
+  const [returnComment, setReturnComment] = useState('');
+  const [returning, setReturning] = useState(false);
+  const handleReturnTicket = async () => {
+    if (!selectedTicket) return;
+    setReturning(true);
+    try {
+      await returnTicket(selectedTicket.id, returnComment);
+      setSelectedTicket(null);
+      setReturnComment('');
+      fetchTickets();
+    } catch (err) {
+      console.error('Failed to return ticket:', err);
+    } finally {
+      setReturning(false);
+    }
+  };
+
   // Escalate ticket
+  const [escaladeMotif, setEscaladeMotif] = useState('');
   const handleEscalate = async (type) => {
     if (!selectedTicket) return;
+    if (!escaladeMotif.trim()) {
+      alert('Veuillez saisir un motif d\'escalade.');
+      return;
+    }
     setIsSummarizing(true);
     try {
       await escalateTicket(selectedTicket.id, {
         type_escalade: type,
-        motif: `Escalade ${type} demandée par l'agent.`,
+        motif: escaladeMotif.trim(),
       });
       setSelectedTicket(null);
       setShowEscalation(false);
+      setEscaladeMotif('');
       fetchTickets();
     } catch (err) {
       console.error('Failed to escalate:', err);
@@ -295,13 +319,20 @@ export default function WorkspaceView({ agentRole = 'agent' }) {
             {/* Escalation Panel */}
             {showEscalation && (
               <div className="workspace-escalation-panel">
-                <p className="workspace-panel-label">Escalade Technique</p>
+                <p className="workspace-panel-label">Escalader ce ticket</p>
+                <textarea
+                  value={escaladeMotif}
+                  onChange={(e) => setEscaladeMotif(e.target.value)}
+                  placeholder="Motif d'escalade (obligatoire)..."
+                  rows={3}
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#0055A4]/30 resize-none mb-3"
+                />
                 <div className="workspace-escalation-grid">
-                  <Button variant="outline" className="workspace-escalation-option" onClick={() => handleEscalate('technique')}>
+                  <Button variant="outline" className="workspace-escalation-option" onClick={() => handleEscalate('technique')} disabled={isSummarizing}>
                     <Cpu className="w-5 h-5 mb-2" />
                     <span className="text-[10px] font-black uppercase">{t('sidebar.brand_sub_technique')}</span>
                   </Button>
-                  <Button variant="outline" className="workspace-escalation-option" onClick={() => handleEscalate('annexe')}>
+                  <Button variant="outline" className="workspace-escalation-option" onClick={() => handleEscalate('annexe')} disabled={isSummarizing}>
                     <MapPin className="w-5 h-5 mb-2" />
                     <span className="text-[10px] font-black uppercase">{t('sidebar.brand_sub_annexe')}</span>
                   </Button>
@@ -604,9 +635,36 @@ export default function WorkspaceView({ agentRole = 'agent' }) {
                 <p className="readonly-text">Archive : Lecture seule.</p>
               </div>
             ) : (
-              <div className="workspace-readonly-footer">
-                <ShieldAlert className="w-6 h-6 text-[#0055A4]" />
-                <p className="readonly-text">Consultation experte — Pièces jointes et résumé IA disponibles ci-dessus.</p>
+              <div className="workspace-chat-footer">
+                <div className="flex items-center gap-2">
+                  <Textarea
+                    placeholder="Commentaire de retour (optionnel)..."
+                    className="flex-1 min-h-[40px] max-h-[80px] text-xs rounded-xl border-slate-200 resize-none"
+                    value={returnComment}
+                    onChange={(e) => setReturnComment(e.target.value)}
+                    rows={1}
+                  />
+                  <Button
+                    className="h-10 px-5 text-[10px] font-black uppercase bg-[#0055A4] hover:bg-[#003d7a] text-white rounded-xl shadow-lg cursor-pointer"
+                    onClick={handleReturnTicket}
+                    disabled={returning}
+                  >
+                    {returning ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <ArrowDownCircle className="w-4 h-4 mr-1" />}
+                    Renvoyer à l'agent
+                  </Button>
+                </div>
+                <div className="workspace-reply-form mt-2">
+                  <Textarea
+                    placeholder="Message à l'agent d'origine..."
+                    className="workspace-reply-input"
+                    value={replyText}
+                    onChange={(e) => setReplyText(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(); } }}
+                  />
+                  <Button className="workspace-send-btn" onClick={handleSendMessage} disabled={!replyText.trim()}>
+                    <Send className="w-7 h-7" />
+                  </Button>
+                </div>
               </div>
             )}
           </CardContent>
