@@ -112,10 +112,18 @@ class TicketsEscaladesView(APIView):
 
     def get(self, request):
         agent = request.user
+        historique = request.query_params.get('historique', 'false').lower() == 'true'
+
         if agent.role == 'agent_technique':
-            tickets = Ticket.objects.filter(agent_technique=agent, statut='escalade')
+            if historique:
+                tickets = Ticket.objects.filter(agent_technique=agent).exclude(statut='escalade')
+            else:
+                tickets = Ticket.objects.filter(agent_technique=agent, statut='escalade')
         else:
-            tickets = Ticket.objects.filter(agent_annexe=agent, statut='escalade')
+            if historique:
+                tickets = Ticket.objects.filter(agent_annexe=agent).exclude(statut='escalade')
+            else:
+                tickets = Ticket.objects.filter(agent_annexe=agent, statut='escalade')
 
         # Filtrer par commune si l'agent a une commune définie
         if agent.commune:

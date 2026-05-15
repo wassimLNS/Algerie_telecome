@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext, useMemo, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { AuthContext } from '@/contexts/AuthContext';
-import { getAgentTickets, getAgentTicketDetail, updateTicketStatus, escalateTicket, getEscalatedTickets, getTicketClientHistory, toggleEmailRelay, returnTicket } from '@/api/tickets';
+import { getAgentTickets, getAgentTicketDetail, updateTicketStatus, escalateTicket, getEscalatedTickets, getEscalatedTicketsHistory, getTicketClientHistory, toggleEmailRelay, returnTicket } from '@/api/tickets';
 import { getMessages, sendMessage as sendMessageAPI, getAISummary } from '@/api/chat';
 import { useWebSocket } from '@/hooks/useWebSocket';
 import { AgentDashboard } from '@/components/features/workspace/AgentDashboard';
@@ -47,6 +47,7 @@ export default function WorkspaceView({ agentRole = 'agent' }) {
   const messagesEndRef = useRef(null);
 
   // Fetch tickets
+  const [historyTickets, setHistoryTickets] = useState([]);
   const fetchTickets = async () => {
     setLoading(true);
     try {
@@ -55,6 +56,11 @@ export default function WorkspaceView({ agentRole = 'agent' }) {
         data = await getAgentTickets();
       } else {
         data = await getEscalatedTickets();
+        // Also fetch history for tech/annexe
+        try {
+          const hist = await getEscalatedTicketsHistory();
+          setHistoryTickets(Array.isArray(hist) ? hist : hist.results || []);
+        } catch { setHistoryTickets([]); }
       }
       setTickets(Array.isArray(data) ? data : data.results || []);
     } catch (err) {
@@ -70,11 +76,21 @@ export default function WorkspaceView({ agentRole = 'agent' }) {
 
   // Filter tickets based on tab and search
   const filteredTickets = useMemo(() => {
-    let filtered = tickets;
+    let filtered;
     if (activeTab === 'history') {
-      filtered = filtered.filter(t => ['resolu', 'ferme', 'rejete'].includes(t.statut));
+      if (agentRole === 'agent') {
+        filtered = tickets.filter(t => ['resolu', 'ferme', 'rejete'].includes(t.statut));
+      } else {
+        filtered = historyTickets;
+      }
     } else if (activeTab === 'tickets') {
-      filtered = filtered.filter(t => !['resolu', 'ferme', 'rejete'].includes(t.statut));
+      if (agentRole === 'agent') {
+        filtered = tickets.filter(t => !['resolu', 'ferme', 'rejete'].includes(t.statut));
+      } else {
+        filtered = tickets; // already filtered by statut='escalade' from API
+      }
+    } else {
+      filtered = tickets;
     }
     if (searchTerm) {
       const q = searchTerm.toLowerCase();
@@ -86,7 +102,7 @@ export default function WorkspaceView({ agentRole = 'agent' }) {
       );
     }
     return filtered;
-  }, [tickets, activeTab, searchTerm]);
+  }, [tickets, historyTickets, activeTab, searchTerm, agentRole]);
 
   // Open ticket drawer
   const handleOpenTicket = async (ticket) => {
