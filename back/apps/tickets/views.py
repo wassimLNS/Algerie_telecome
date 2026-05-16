@@ -83,9 +83,9 @@ class TicketAgentDetailView(APIView):
             if agent.role == 'agent':
                 return Ticket.objects.get(id=ticket_id, agent=agent)
             elif agent.role == 'agent_technique':
-                return Ticket.objects.get(id=ticket_id, centre=agent.centre, statut='escalade_technique')
+                return Ticket.objects.get(id=ticket_id, agent_technique=agent, statut='escalade')
             elif agent.role == 'agent_annexe':
-                return Ticket.objects.get(id=ticket_id, centre=agent.centre, statut='escalade_annexe')
+                return Ticket.objects.get(id=ticket_id, agent_annexe=agent, statut='escalade')
             return None
         except Ticket.DoesNotExist:
             return None
@@ -112,10 +112,18 @@ class TicketsEscaladesView(APIView):
 
     def get(self, request):
         agent = request.user
+        historique = request.query_params.get('historique', 'false').lower() == 'true'
+
         if agent.role == 'agent_technique':
-            tickets = Ticket.objects.filter(centre=agent.centre, statut='escalade_technique')
+            if historique:
+                tickets = Ticket.objects.filter(agent_technique=agent).exclude(statut='escalade')
+            else:
+                tickets = Ticket.objects.filter(agent_technique=agent, statut='escalade')
         else:
-            tickets = Ticket.objects.filter(centre=agent.centre, statut='escalade_annexe')
+            if historique:
+                tickets = Ticket.objects.filter(agent_annexe=agent).exclude(statut='escalade')
+            else:
+                tickets = Ticket.objects.filter(agent_annexe=agent, statut='escalade')
 
         # Filtrer par commune si l'agent a une commune définie
         if agent.commune:
@@ -266,9 +274,9 @@ class RetournerTicketView(APIView):
         agent = request.user
         try:
             if agent.role == 'agent_technique':
-                ticket = Ticket.objects.get(id=ticket_id, centre=agent.centre, statut='escalade_technique')
+                ticket = Ticket.objects.get(id=ticket_id, agent_technique=agent, statut='escalade')
             elif agent.role == 'agent_annexe':
-                ticket = Ticket.objects.get(id=ticket_id, centre=agent.centre, statut='escalade_annexe')
+                ticket = Ticket.objects.get(id=ticket_id, agent_annexe=agent, statut='escalade')
             else:
                 return Response({'error': 'Action non autorisée'}, status=status.HTTP_403_FORBIDDEN)
         except Ticket.DoesNotExist:

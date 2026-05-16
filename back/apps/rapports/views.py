@@ -44,7 +44,7 @@ class StatsGeneralesView(APIView):
         en_cours        = tickets.filter(statut='en_cours').count()
         resolus         = tickets.filter(statut='resolu').count()
         fermes          = tickets.filter(statut='ferme').count()
-        escalades       = tickets.filter(statut__in=['escalade_technique', 'escalade_annexe']).count()
+        escalades       = tickets.filter(statut__in=['escalade']).count()
         rejetes         = tickets.filter(statut='rejete').count()
 
         # Satisfaction moyenne
@@ -130,7 +130,7 @@ class PerformancesAgentsView(APIView):
             total   = tickets.count()
 
             resolus  = tickets.filter(statut__in=['resolu', 'ferme']).count()
-            escalades = tickets.filter(statut__in=['escalade_technique', 'escalade_annexe']).count()
+            escalades = tickets.filter(statut__in=['escalade']).count()
             actifs   = tickets.filter(statut__in=['soumis', 'en_cours']).count()
 
             # Temps moyen de résolution en minutes
@@ -214,7 +214,7 @@ class ExportPDFView(APIView):
             ['En cours',        tickets.filter(statut='en_cours').count()],
             ['Résolus',         tickets.filter(statut='resolu').count()],
             ['Fermés',          tickets.filter(statut='ferme').count()],
-            ['Escaladés',       tickets.filter(statut__in=['escalade_technique', 'escalade_annexe']).count()],
+            ['Escaladés',       tickets.filter(statut__in=['escalade']).count()],
         ]
         table = Table(data, colWidths=[300, 150])
         table.setStyle(TableStyle([
@@ -236,7 +236,7 @@ class ExportPDFView(APIView):
             t = Ticket.objects.filter(agent=agent)
             total    = t.count()
             resolus  = t.filter(statut__in=['resolu', 'ferme']).count()
-            escalades = t.filter(statut__in=['escalade_technique', 'escalade_annexe']).count()
+            escalades = t.filter(statut__in=['escalade']).count()
             taux     = f"{round(resolus / total * 100, 1)}%" if total > 0 else "0%"
             data2.append([f"{agent.prenom} {agent.nom}", total, resolus, escalades, taux])
 
@@ -320,7 +320,7 @@ class ExportExcelView(APIView):
             t        = Ticket.objects.filter(agent=agent)
             total    = t.count()
             resolus  = t.filter(statut__in=['resolu', 'ferme']).count()
-            escalades = t.filter(statut__in=['escalade_technique', 'escalade_annexe']).count()
+            escalades = t.filter(statut__in=['escalade']).count()
             taux     = f"{round(resolus / total * 100, 1)}%" if total > 0 else "0%"
             satisfaction = t.filter(satisfaction_client__isnull=False).aggregate(moy=Avg('satisfaction_client'))['moy']
             ws2.append([

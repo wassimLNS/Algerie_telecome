@@ -137,11 +137,11 @@ class Command(BaseCommand):
             (clients[0], agent_karim, 'en_cours',  3, 4, "Internet coupé",                      "Mon internet ADSL ne fonctionne plus du tout."),
             (clients[1], agent_sara,  'en_cours',  2, 3, "Débit très lent",                     "Le débit est tombé à 0.5 Mbps au lieu de 8 Mbps."),
             (clients[1], agent_sara,  'resolu',    7, 2, "Fritures sur la ligne",                "Beaucoup de bruit sur la ligne téléphonique."),
-            (clients[2], agent_karim, 'escalade_technique', 4, 4, "Internet coupé (pro)",        "Internet coupé sur notre liaison pro depuis 4 jours."),
+            (clients[2], agent_karim, 'escalade', 4, 4, "Internet coupé (pro)",        "Internet coupé sur notre liaison pro depuis 4 jours."),
             (clients[2], agent_sara,  'ferme',    14, 1, "Appels impossibles",                   "Impossible d'émettre ou recevoir des appels."),
             (clients[3], None,        'soumis',    0, 9, "Ping très élevé",                     "Le ping est à 500ms, impossible de travailler."),
             (clients[3], agent_karim, 'resolu',    5, 11,"Coupures répétitives",                 "La connexion se coupe toutes les 10 minutes."),
-            (clients[4], agent_sara,  'escalade_annexe', 3, 5, "Liaison spécialisée en panne",  "Notre liaison spécialisée est complètement down."),
+            (clients[4], agent_sara,  'escalade', 3, 5, "Liaison spécialisée en panne",  "Notre liaison spécialisée est complètement down."),
             (clients[4], agent_karim, 'ouvert',    0, 10,"Upload très faible",                  "Vitesse d'upload à 0.1 Mbps."),
         ]
 
@@ -165,7 +165,7 @@ class Command(BaseCommand):
                 echeance_sla=created_at + timedelta(hours=48),
             )
             # Set timestamps
-            if statut in ['en_cours', 'escalade_technique', 'escalade_annexe', 'resolu', 'ferme']:
+            if statut in ['en_cours', 'escalade', 'resolu', 'ferme']:
                 ticket.pris_en_charge_a = created_at + timedelta(hours=random.randint(1, 4))
             if statut in ['resolu', 'ferme']:
                 ticket.resolu_a = created_at + timedelta(hours=random.randint(6, 24))
@@ -186,33 +186,32 @@ class Command(BaseCommand):
         # ESCALADES
         # ═══════════════════════════════════════════
         for ticket in created_tickets:
-            if ticket.statut == 'escalade_technique':
-                Escalade.objects.get_or_create(
-                    ticket=ticket,
-                    defaults={
-                        'type_escalade': 'technique',
-                        'agent_source': ticket.agent,
-                        'agent_cible': agent_tech,
-                        'motif': "Problème réseau complexe nécessitant intervention technique sur le répartiteur.",
-                    }
-                )
-                ticket.agent_technique = agent_tech
-                ticket.save()
-                self.stdout.write(f"  ⬆️  Escalade technique: {ticket.numero_ticket}")
+            if ticket.statut == 'escalade':
+                # Determine type from agent assignment
+                esc_type = 'technique'
+                esc_agent = agent_tech
+                esc_motif = "Problème réseau complexe nécessitant intervention technique sur le répartiteur."
+                # Alternate: make the second one annexe
+                if ticket.agent == agent_sara:
+                    esc_type = 'annexe'
+                    esc_agent = agent_annex
+                    esc_motif = "Nécessite une vérification physique de l'installation chez le client."
 
-            elif ticket.statut == 'escalade_annexe':
                 Escalade.objects.get_or_create(
                     ticket=ticket,
                     defaults={
-                        'type_escalade': 'annexe',
+                        'type_escalade': esc_type,
                         'agent_source': ticket.agent,
-                        'agent_cible': agent_annex,
-                        'motif': "Nécessite une vérification physique de l'installation chez le client.",
+                        'agent_cible': esc_agent,
+                        'motif': esc_motif,
                     }
                 )
-                ticket.agent_annexe = agent_annex
+                if esc_type == 'technique':
+                    ticket.agent_technique = agent_tech
+                else:
+                    ticket.agent_annexe = agent_annex
                 ticket.save()
-                self.stdout.write(f"  ⬆️  Escalade annexe: {ticket.numero_ticket}")
+                self.stdout.write(f"  ⬆️  Escalade {esc_type}: {ticket.numero_ticket}")
 
         # ═══════════════════════════════════════════
         # MESSAGES CHAT

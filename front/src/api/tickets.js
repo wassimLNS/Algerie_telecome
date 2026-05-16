@@ -89,6 +89,12 @@ export const getEscalatedTickets = async () => {
   return response.data;
 };
 
+// Get history of treated tickets (for tech & annex agents)
+export const getEscalatedTicketsHistory = async () => {
+  const response = await api.get('/tickets/escalades/?historique=true');
+  return response.data;
+};
+
 // Return ticket to original agent (tech/annexe only)
 export const returnTicket = async (ticketId, commentaire = '') => {
   const response = await api.post(`/tickets/escalades/${ticketId}/retourner/`, { commentaire });
