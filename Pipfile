@@ -13,10 +13,10 @@ daphne = "*"
 python-decouple = "*"
 django-filter = "*"
 reportlab = "*"
-openpyxl = "*"
 psycopg2-binary = "*"
 channels-redis = "*"
 requests = "*"
+openpyxl = "*"
 
 [dev-packages]
 

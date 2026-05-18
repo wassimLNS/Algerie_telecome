@@ -206,11 +206,21 @@ export function NewTicketForm({ userPhone, onSubmit }) {
                     <SelectValue placeholder={t('ticket_form.service_label')} />
                   </SelectTrigger>
                   <SelectContent className="rounded-xl shadow-2xl">
-                    {serviceTypes.map(t => (
-                      <SelectItem key={t.id} value={String(t.id)} label={t.libelle} className="font-bold text-xs uppercase">
-                        {t.libelle}
+                    {serviceTypes.map(st => {
+                      const libelleKey = `service_types.${st.code}.libelle`;
+                      const descKey = `service_types.${st.code}.description`;
+                      const tLibelle = t(libelleKey, { defaultValue: st.libelle });
+                      const tDesc = st.description ? t(descKey, { defaultValue: st.description }) : null;
+                      return (
+                      <SelectItem key={st.id} value={String(st.id)} label={tLibelle} className="font-bold text-xs uppercase" title={tDesc || ''}>
+                        <div className="flex flex-col gap-0.5">
+                          <span>{tLibelle}</span>
+                          {tDesc && (
+                            <span className="text-[9px] font-medium text-slate-400 normal-case">{tDesc}</span>
+                          )}
+                        </div>
                       </SelectItem>
-                    ))}
+                    )})}
                   </SelectContent>
                 </Select>
               </div>
@@ -220,7 +230,7 @@ export function NewTicketForm({ userPhone, onSubmit }) {
                   <Phone className="h-4 w-4" />
                 </div>
                 <div>
-                  <Label className="text-[10px] font-black uppercase text-slate-400">Ligne AT</Label>
+                  <Label className="text-[10px] font-black uppercase text-slate-400">{t('portal.at_line')}</Label>
                   <p className="text-sm font-black text-slate-700 tracking-tight">{userPhone}</p>
                 </div>
               </div>
@@ -231,7 +241,6 @@ export function NewTicketForm({ userPhone, onSubmit }) {
                 <Search className="w-3.5 h-3.5" /> {t('portal.service')}
               </Label>
               <div className="mt-3">
-                <p className="text-base font-black text-slate-900 leading-none">Algérie Télécom — Zone Client</p>
                 <p className="text-base font-black text-slate-900 leading-none">{t('portal.at_zone')}</p>
                 <p className="text-[11px] font-black text-[#0055A4] uppercase mt-1">{t('portal.auto_detection')}</p>
               </div>

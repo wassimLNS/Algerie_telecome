@@ -25,7 +25,7 @@
     "brand_sub_client": "فضاء المشترك",
     "brand_sub_agent": "مركز الاتصال",
     "brand_sub_technique": "الدعم الوطني",
-    "brand_sub_annexe": "الدعم المحلي",
+    "brand_sub_annexe": "دعم ACTEL",
     "brand_sub_admin": "الإدارة العامة",
     "my_space": "فضائي",
     "claims": "الشكاوى",
@@ -45,8 +45,10 @@
     "role_client": "مشترك",
     "role_agent": "عميل دعم",
     "role_technique": "تقني",
-    "role_annexe": "ملحق",
-    "role_admin": "مدير"
+    "role_annexe": "ACTEL",
+    "role_admin": "مدير",
+    "new_claim": "+ شكوى",
+    "it_requests": "طلبات تقنية"
   },
   "portal": {
     "title": "شكاواي",
@@ -63,11 +65,20 @@
     "in_progress": "قيد المعالجة",
     "resolved": "تم الحل",
     "closed": "مغلق",
-    "rejected": "مرفوض"
+    "rejected": "مرفوض",
+    "all_statuses": "جميع الحالات",
+    "new": "جديد",
+    "escalated": "تم التصعيد",
+    "at_line": "خط اتصالات الجزائر",
+    "ticket": "التذكرة",
+    "ticket_id": "رقم التذكرة",
+    "client": "الزبون",
+    "date": "التاريخ"
   },
   "ticket_form": {
     "title": "شكوى جديدة",
     "service_label": "نوع الخدمة",
+    "service_placeholder": "اختر خدمة",
     "subject_label": "الموضوع",
     "description_label": "وصف مفصّل",
     "attachment_label": "مرفق (اختياري)",
@@ -87,7 +98,7 @@
     "readonly_desc": "أنت تستعرض هذه التذكرة في وضع القراءة فقط."
   },
   "agent": {
-    "active_queue": "قائمة الانتظار النشطة",
+    "active_queue": "الطابور النشط",
     "total_tickets": "إجمالي التذاكر",
     "resolved_today": "تم حلها اليوم",
     "avg_time": "متوسط الوقت",
@@ -95,7 +106,13 @@
     "escalate": "تصعيد",
     "resolve": "حل",
     "close_ticket": "إغلاق",
-    "take_ticket": "تولي المسؤولية"
+    "take_ticket": "تولي المسؤولية",
+    "late": "متأخر",
+    "hours_remaining": "ساعات متبقية",
+    "view": "عرض",
+    "inactive": "غير نشط",
+    "online": "متصل",
+    "offline": "غير متصل"
   },
   "admin": {
     "title": "القيادة الوطنية",
@@ -126,7 +143,112 @@
     "dim_types": "الأنواع",
     "dim_time": "الوقت",
     "dim_priority": "الأولوية",
-    "dim_agents": "العملاء"
+    "dim_agents": "العملاء",
+    "manual_assign": "تعيين جراحي يدوي",
+    "history_desc": "تتبع كامل للشكاوى",
+    "user": "المستخدم",
+    "ip": "عنوان IP",
+    "result": "النتيجة",
+    "datetime": "التاريخ والوقت",
+    "live_supervision": "مراقبة الجودة المباشرة",
+    "actions": "الإجراءات"
+  },
+  "roles": {
+    "all": "جميع الأدوار",
+    "agent": "العميل",
+    "agent_technique": "عميل تقني",
+    "agent_annexe": "عميل ACTEL",
+    "admin": "مدير",
+    "admin_it": "مدير تقنية المعلومات",
+    "client": "عميل",
+    "staff": "الموظفون (خبراء، مدراء...)"
+  },
+  "filters": {
+    "all_centres": "جميع المراكز",
+    "all_communes": "جميع البلديات",
+    "select_centre": "اختر مركزاً",
+    "centre": "المركز...",
+    "reset": "إعادة ضبط"
+  },
+  "reports": {
+    "generate": "إنشاء تقرير",
+    "download_excel": "تحميل Excel"
+  },
+  "demands": {
+    "title_agent": "طلباتي التقنية",
+    "title_admin": "طلبات المركز التقنية",
+    "title_it": "الطلبات المستلمة",
+    "new_demand": "طلب جديد",
+    "my_demand": "طلبي الخاص",
+    "subject": "الموضوع",
+    "description": "الوصف",
+    "priority": "الأولوية",
+    "respond": "ردّ",
+    "approve": "موافقة",
+    "refuse": "رفض",
+    "process": "معالجة",
+    "comment_placeholder": "تعليق (اختياري)...",
+    "response_placeholder": "الرد...",
+    "send_to_it": "إرسال إلى قسم تقنية المعلومات",
+    "direct_send": "أُرسل مباشرة إلى مدير تقنية المعلومات (بدون موافقة)",
+    "no_demands": "لا توجد طلبات حالياً.",
+    "no_demands_centre": "لا توجد طلبات في مركزك.",
+    "pending_approval": "في انتظار الموافقة",
+    "history": "السجل",
+    "to_process": "للمعالجة",
+    "processed": "تمت المعالجة",
+    "all": "الكل",
+    "attach_file": "إرفاق ملف",
+    "subject_placeholder": "مثال: مشكلة شبكة، الوصول إلى الخادم...",
+    "description_placeholder": "صِف طلبك بالتفصيل...",
+    "details_placeholder": "التفاصيل..."
+  },
+  "demands_priority": {
+    "basse": "منخفضة",
+    "normale": "عادية",
+    "haute": "عالية",
+    "urgente": "عاجلة"
+  },
+  "demands_status": {
+    "en_attente": "قيد الانتظار",
+    "approuvee": "مُوافق عليها",
+    "refusee": "مرفوضة",
+    "traitee": "تمت المعالجة",
+    "refusee_it": "رفضتها تقنية المعلومات"
+  },
+  "actel_form": {
+    "title": "شكوى عميل جديدة",
+    "subtitle": "تسجيل في وكالة ACTEL",
+    "phone_label": "رقم هاتف العميل",
+    "phone_placeholder": "مثال: 0551234567",
+    "service_label": "نوع الخدمة",
+    "service_placeholder": "اختر خدمة",
+    "title_label": "العنوان (اختياري)",
+    "title_placeholder": "عنوان قصير للشكوى",
+    "description_label": "الوصف",
+    "description_placeholder": "صِف مشكلة العميل...",
+    "submit": "إنشاء الشكوى",
+    "error_required": "يرجى ملء جميع الحقول المطلوبة.",
+    "error_generic": "خطأ أثناء إنشاء التذكرة.",
+    "success": "تم الإنشاء بنجاح!"
+  },
+  "validation": {
+    "firstname_required": "الاسم الأول مطلوب",
+    "lastname_required": "الاسم العائلي مطلوب",
+    "email_required": "البريد الإلكتروني مطلوب",
+    "phone_required": "رقم الهاتف مطلوب",
+    "centre_required": "المركز مطلوب",
+    "letters_only": "أحرف فقط (بدون أرقام)",
+    "min_password": "8 أحرف كحد أدنى",
+    "creation_error": "خطأ أثناء الإنشاء.",
+    "edit_error": "خطأ أثناء التعديل.",
+    "delete_error": "خطأ أثناء الحذف.",
+    "save_error": "خطأ أثناء الحفظ"
+  },
+  "agent_mgmt": {
+    "save": "حفظ",
+    "delete_confirm": "نعم، حذف",
+    "no_agents": "لم يتم العثور على عملاء"
   },
   "errors": {
     "not_found_title": "الصفحة غير موجودة",
@@ -146,5 +268,84 @@
     "close": "إغلاق",
     "yes": "نعم",
     "no": "لا"
+  },
+  "priority": {
+    "critique": "حرج",
+    "haute": "عالي",
+    "normale": "عادي",
+    "basse": "منخفض"
+  },
+  "agent_management": {
+    "placeholder_prenom": "الاسم",
+    "placeholder_nom": "اللقب",
+    "placeholder_email": "name@at.dz",
+    "placeholder_password": "على الأقل 8 أحرف",
+    "full_name": "الاسم الكامل",
+    "email_at": "البريد الإلكتروني AT",
+    "phone": "رقم الهاتف",
+    "distribution_center": "مركز التوزيع"
+  },
+  "centre_management": {
+    "search": "ابحث عن مركز...",
+    "code_placeholder": "مثال: C01",
+    "name_placeholder": "اسم المركز"
+  },
+  "service_types": {
+    "PAS_TONALITE": {
+      "libelle": "لا توجد حرارة",
+      "description": "غياب تام للإشارة الصوتية على الخط الأرضي (لا يوجد رنين عند الرفع)"
+    },
+    "PAS_APPELS": {
+      "libelle": "لا يوجد مكالمات صادرة/واردة",
+      "description": "غير قادر على إجراء أو استقبال المكالمات الهاتفية"
+    },
+    "FRITURES_LIGNE": {
+      "libelle": "تشويش في الخط",
+      "description": "طقطقة، ضوضاء تشويش، أو تداخل مسموع أثناء المكالمات"
+    },
+    "CHUTE_DEBIT": {
+      "libelle": "انخفاض سرعة الإنترنت",
+      "description": "سرعة الإنترنت أقل بكثير من السرعة المتعاقد عليها"
+    },
+    "PAS_INTERNET": {
+      "libelle": "لا يوجد إنترنت",
+      "description": "انقطاع تام لاتصال الإنترنت، لا يمكن التصفح"
+    },
+    "LIAISON_SPECIALISEE": {
+      "libelle": "خط مخصص",
+      "description": "عطل أو تدهور في خط مهني مخصص"
+    },
+    "IDOOM_INTERNET_PRO": {
+      "libelle": "IDOOM Internet PRO",
+      "description": "مشكلة تتعلق باشتراك IDOOM للإنترنت المهني"
+    },
+    "INTRANET_VPN": {
+      "libelle": "Intranet/VPN",
+      "description": "خلل في الشبكة الخاصة الافتراضية أو الشبكة الداخلية للشركة"
+    },
+    "SIGNAUX_NON_RETABLIS": {
+      "libelle": "إشارات غير مستعادة",
+      "description": "الإشارات لا تزال غائبة بعد تدخل تقني سابق"
+    },
+    "PING_ELEVE": {
+      "libelle": "ارتفاع في البينج (Ping)",
+      "description": "زمن انتقال الشبكة مرتفع بشكل غير طبيعي مما يؤثر على الخدمات في الوقت الفعلي"
+    },
+    "UPLOAD_FAIBLE": {
+      "libelle": "سرعة رفع ضعيفة",
+      "description": "سرعة رفع البيانات منخفضة جدًا مقارنة بالسرعة المشترك فيها"
+    },
+    "COUPURES_REPETITIVES": {
+      "libelle": "انقطاعات متكررة",
+      "description": "انقطاعات متكررة ومتتالية لخط الإنترنت"
+    },
+    "COUVERTURE_4G": {
+      "libelle": "مشكلة في تغطية الشبكة (4G LTE)",
+      "description": "إشارة 4G LTE غائبة أو غير مستقرة في منطقة التغطية"
+    },
+    "PAS_TONALITE_INTERNET": {
+      "libelle": "لا توجد حرارة / لا يوجد إنترنت",
+      "description": "فقدان متزامن لحرارة الهاتف واتصال الإنترنت"
+    }
   }
 }

@@ -10,7 +10,7 @@ class Role(models.TextChoices):
     CLIENT           = 'client',           'Client'
     AGENT            = 'agent',            'Agent'
     AGENT_TECHNIQUE  = 'agent_technique',  'Agent Technique'
-    AGENT_ANNEXE     = 'agent_annexe',     'Agent Annexe'
+    AGENT_ANNEXE     = 'agent_annexe',     'Agent ACTEL'
     ADMIN            = 'admin',            'Admin'
     ADMIN_IT         = 'admin_it',         'Admin IT'
 
@@ -240,6 +240,9 @@ class DemandeIT(models.Model):
 
     # Réponse de l'admin IT
     reponse_it = models.TextField(null=True, blank=True)
+    fichier_reponse     = models.BinaryField(null=True, blank=True)
+    fichier_reponse_nom = models.CharField(max_length=255, null=True, blank=True)
+    fichier_reponse_type = models.CharField(max_length=100, null=True, blank=True)
     traite_par = models.ForeignKey(
         Utilisateur,
         on_delete=models.SET_NULL,

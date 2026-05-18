@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext, useMemo, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { AuthContext } from '@/contexts/AuthContext';
-import { getAgentTickets, getAgentTicketDetail, updateTicketStatus, escalateTicket, getEscalatedTickets, getEscalatedTicketsHistory, getTicketClientHistory, toggleEmailRelay, returnTicket } from '@/api/tickets';
+import { getAgentTickets, getAgentTicketDetail, updateTicketStatus, escalateTicket, getEscalatedTickets, getEscalatedTicketsHistory, getTicketClientHistory, toggleEmailRelay, returnTicket, createTicketACTEL, getServiceTypes } from '@/api/tickets';
 import { getMessages, sendMessage as sendMessageAPI, getAISummary } from '@/api/chat';
 import { useWebSocket } from '@/hooks/useWebSocket';
 import { AgentDashboard } from '@/components/features/workspace/AgentDashboard';
@@ -12,11 +12,12 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Search, Activity, Cpu, X, Send, CheckCircle2, ArrowUpCircle, ArrowDownCircle,
-  BrainCircuit, Loader2, User, Phone, Info, ShieldAlert, MapPin, FileText, Paperclip, Eye, Calendar, Mail, MailX, ChevronDown, ChevronUp
+  BrainCircuit, Loader2, User, Phone, Info, ShieldAlert, MapPin, FileText, Paperclip, Eye, Calendar, Mail, MailX, ChevronDown, ChevronUp, UserPlus
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import api from '@/api/axios';
@@ -258,9 +259,9 @@ export default function WorkspaceView({ agentRole = 'agent' }) {
   };
 
   const roleLabels = {
-    agent: 'Agent Support',
-    agent_technique: 'Agent Technique',
-    agent_annexe: 'Agent Annexe',
+    agent: t('roles.agent'),
+    agent_technique: t('roles.tech'),
+    agent_annexe: t('roles.actel'),
   };
 
   const isClosed = selectedTicket && ['resolu', 'ferme', 'rejete'].includes(selectedTicket.statut);
@@ -287,7 +288,10 @@ export default function WorkspaceView({ agentRole = 'agent' }) {
           <Button variant={activeTab === 'dashboard' ? 'default' : 'outline'} className="workspace-nav-btn" onClick={() => setSearchParams({ tab: 'dashboard' })}>{t('sidebar.performance')}</Button>
           <Button variant={activeTab === 'tickets' ? 'default' : 'outline'} className="workspace-nav-btn" onClick={() => setSearchParams({ tab: 'tickets' })}>{t('sidebar.tickets')}</Button>
           <Button variant={activeTab === 'history' ? 'default' : 'outline'} className="workspace-nav-btn" onClick={() => setSearchParams({ tab: 'history' })}>{t('sidebar.history')}</Button>
-          <Button variant={activeTab === 'demandes' ? 'default' : 'outline'} className="workspace-nav-btn" onClick={() => setSearchParams({ tab: 'demandes' })}>Demandes IT</Button>
+          {agentRole === 'agent_annexe' && (
+            <Button variant={activeTab === 'nouveau' ? 'default' : 'outline'} className="workspace-nav-btn" onClick={() => setSearchParams({ tab: 'nouveau' })}>{t('sidebar.new_claim')}</Button>
+          )}
+          <Button variant={activeTab === 'demandes' ? 'default' : 'outline'} className="workspace-nav-btn" onClick={() => setSearchParams({ tab: 'demandes' })}>{t('sidebar.it_requests')}</Button>
         </div>
       </div>
 
@@ -297,6 +301,8 @@ export default function WorkspaceView({ agentRole = 'agent' }) {
           <AgentDashboard tickets={tickets} user={user} />
         ) : activeTab === 'demandes' ? (
           <DemandesAgent />
+        ) : activeTab === 'nouveau' && agentRole === 'agent_annexe' ? (
+          <ACTELNewTicketForm onCreated={() => { fetchTickets(); setSearchParams({ tab: 'tickets' }); }} />
         ) : (
           <ActiveQueue tickets={filteredTickets} onOpenTicket={handleOpenTicket} isHistory={activeTab === 'history'} />
         )}
@@ -710,6 +716,148 @@ export default function WorkspaceView({ agentRole = 'agent' }) {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+
+// ─── ACTEL Agent: Create Ticket Form ───
+function ACTELNewTicketForm({ onCreated }) {
+  const { t } = useTranslation();
+  const [telephone, setTelephone] = useState('');
+  const [serviceTypes, setServiceTypesLocal] = useState([]);
+  const [typeService, setTypeService] = useState('');
+  const [titre, setTitre] = useState('');
+  const [description, setDescription] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+
+  useEffect(() => {
+    getServiceTypes().then(data => setServiceTypesLocal(data.results || data)).catch(() => {});
+  }, []);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+    if (!telephone || !typeService || !description) {
+      setError(t('actel_form.error_required'));
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const ticket = await createTicketACTEL({
+        telephone,
+        type_service: parseInt(typeService),
+        titre: titre || description.substring(0, 50),
+        description,
+      });
+      setSuccess(`Ticket ${ticket.numero_ticket || '#' + ticket.id} ${t('actel_form.success')}`);
+      setTelephone('');
+      setTypeService('');
+      setTitre('');
+      setDescription('');
+      setTimeout(() => onCreated?.(), 1500);
+    } catch (err) {
+      setError(err.response?.data?.detail || t('actel_form.error_generic'));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="max-w-2xl mx-auto">
+      <Card className="rounded-3xl shadow-2xl border-0">
+        <CardHeader className="bg-gradient-to-r from-[#0055A4] to-[#003d7a] text-white rounded-t-3xl p-8">
+          <div className="flex items-center gap-4">
+            <div className="bg-white/20 p-3 rounded-2xl">
+              <UserPlus className="w-7 h-7" />
+            </div>
+            <div>
+              <CardTitle className="text-xl font-black uppercase tracking-tight">{t('actel_form.title')}</CardTitle>
+              <p className="text-xs font-bold text-white/60 uppercase mt-1">{t('actel_form.subtitle')}</p>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="p-8 space-y-6">
+          {error && (
+            <div className="bg-red-50 text-red-600 p-4 rounded-xl text-sm font-bold border border-red-200">{error}</div>
+          )}
+          {success && (
+            <div className="bg-emerald-50 text-emerald-600 p-4 rounded-xl text-sm font-bold border border-emerald-200 flex items-center gap-2">
+              <CheckCircle2 className="w-5 h-5" /> {success}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Client phone */}
+            <div className="space-y-2">
+              <Label className="text-[10px] font-black uppercase text-slate-500">{t('actel_form.phone_label')} *</Label>
+              <div className="relative">
+                <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Input
+                  type="text"
+                  placeholder={t('actel_form.phone_placeholder')}
+                  value={telephone}
+                  onChange={(e) => setTelephone(e.target.value)}
+                  className="pl-11 h-12 rounded-xl border-slate-200 font-bold"
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Service type */}
+            <div className="space-y-2">
+              <Label className="text-[10px] font-black uppercase text-slate-500">{t('actel_form.service_label')} *</Label>
+              <select
+                value={typeService}
+                onChange={(e) => setTypeService(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-bold bg-white cursor-pointer focus:ring-2 focus:ring-[#0055A4]/30 focus:outline-none"
+                required
+              >
+                <option value="">{t('actel_form.service_placeholder')}</option>
+                {serviceTypes.map(st => (
+                  <option key={st.id} value={st.id}>{st.libelle}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Title */}
+            <div className="space-y-2">
+              <Label className="text-[10px] font-black uppercase text-slate-500">{t('actel_form.title_label')}</Label>
+              <Input
+                type="text"
+                placeholder={t('actel_form.title_placeholder')}
+                value={titre}
+                onChange={(e) => setTitre(e.target.value)}
+                className="h-12 rounded-xl border-slate-200 font-bold"
+              />
+            </div>
+
+            {/* Description */}
+            <div className="space-y-2">
+              <Label className="text-[10px] font-black uppercase text-slate-500">{t('actel_form.description_label')} *</Label>
+              <Textarea
+                placeholder={t('actel_form.description_placeholder')}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="min-h-[120px] rounded-xl font-medium"
+                required
+              />
+            </div>
+
+            <Button
+              type="submit"
+              disabled={submitting}
+              className="w-full py-6 text-sm font-black bg-[#0055A4] text-white rounded-xl shadow-lg hover:bg-[#004080] uppercase tracking-wide cursor-pointer"
+            >
+              {submitting ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : null}
+              {t('actel_form.submit')}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 }

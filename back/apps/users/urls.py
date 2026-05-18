@@ -14,6 +14,8 @@ from .views import (
     DemandesAgentView,
     DemandesAdminView,
     DemandesITView,
+    RapportConnexionsView,
+    FichierDemandeITView,
 )
 
 urlpatterns = [
@@ -44,4 +46,8 @@ urlpatterns = [
     path('demandes/admin/<int:demande_id>/', DemandesAdminView.as_view(), name='demandes-admin-detail'),
     path('demandes/it/',                    DemandesITView.as_view(),     name='demandes-it'),
     path('demandes/it/<int:demande_id>/',   DemandesITView.as_view(),     name='demandes-it-detail'),
+    path('demandes/<int:demande_id>/fichier/', FichierDemandeITView.as_view(), name='fichier-demande-it'),
+
+    # Rapport connexions (admin IT)
+    path('rapport-connexions/',             RapportConnexionsView.as_view(), name='rapport-connexions'),
 ]

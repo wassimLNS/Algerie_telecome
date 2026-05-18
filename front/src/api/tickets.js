@@ -101,6 +101,12 @@ export const returnTicket = async (ticketId, commentaire = '') => {
   return response.data;
 };
 
+// Create ticket on behalf of a walk-in client (ACTEL agent only)
+export const createTicketACTEL = async (data) => {
+  const response = await api.post('/tickets/actel/creer/', data);
+  return response.data;
+};
+
 // ─── ADMIN APIs ───
 
 // Get all tickets (admin)

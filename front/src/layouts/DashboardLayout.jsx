@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { AuthContext } from '@/contexts/AuthContext';
 import { logout as logoutAPI } from '@/api/auth';
-import { ClipboardList, LogOut, UserCircle, BarChart3, History, Cpu, MapPin, Users, LayoutDashboard, GitPullRequest, ShieldAlert, Server } from 'lucide-react';
+import { ClipboardList, LogOut, UserCircle, BarChart3, History, Cpu, MapPin, Users, LayoutDashboard, GitPullRequest, ShieldAlert, Server, PlusCircle } from 'lucide-react';
 import Cookies from 'js-cookie';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import './dashboard-layout.css';
@@ -44,12 +44,13 @@ const getMenuConfig = (t) => ({
     ],
   },
   agent_annexe: {
-    brand: 'AT-Annexe',
+    brand: 'AT-ACTEL',
     brandSub: t('sidebar.brand_sub_annexe'),
     sections: [
       { label: t('sidebar.pilotage'), items: [
         { label: t('sidebar.performance'), icon: BarChart3, path: '/annexe/dashboard', tab: 'dashboard' },
         { label: t('sidebar.escalated_tickets'), icon: MapPin, path: '/annexe/dashboard', tab: 'tickets' },
+        { label: 'Nouvelle Réclamation', icon: PlusCircle, path: '/annexe/dashboard', tab: 'nouveau' },
         { label: t('sidebar.history'), icon: History, path: '/annexe/dashboard', tab: 'history' },
         { label: 'Demandes IT', icon: Server, path: '/annexe/dashboard', tab: 'demandes' },
       ]},

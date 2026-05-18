@@ -25,7 +25,7 @@
     "brand_sub_client": "Subscriber Area",
     "brand_sub_agent": "Call Center",
     "brand_sub_technique": "National Support",
-    "brand_sub_annexe": "Local Support",
+    "brand_sub_annexe": "ACTEL Support",
     "brand_sub_admin": "General Management",
     "my_space": "My Space",
     "claims": "Claims",
@@ -45,8 +45,10 @@
     "role_client": "Subscriber",
     "role_agent": "Support Agent",
     "role_technique": "Technician",
-    "role_annexe": "Annex",
-    "role_admin": "Administrator"
+    "role_annexe": "ACTEL",
+    "role_admin": "Administrator",
+    "new_claim": "+ Claim",
+    "it_requests": "IT Requests"
   },
   "portal": {
     "title": "My Claims",
@@ -63,11 +65,20 @@
     "in_progress": "In Progress",
     "resolved": "Resolved",
     "closed": "Closed",
-    "rejected": "Rejected"
+    "rejected": "Rejected",
+    "all_statuses": "All statuses",
+    "new": "New",
+    "escalated": "Escalated",
+    "at_line": "AT Line",
+    "ticket": "Ticket",
+    "ticket_id": "Ticket ID",
+    "client": "Customer",
+    "date": "Date"
   },
   "ticket_form": {
     "title": "New Claim",
     "service_label": "Service Type",
+    "service_placeholder": "Select a service",
     "subject_label": "Subject",
     "description_label": "Detailed Description",
     "attachment_label": "Attachment (optional)",
@@ -95,7 +106,13 @@
     "escalate": "Escalate",
     "resolve": "Resolve",
     "close_ticket": "Close",
-    "take_ticket": "Take Over"
+    "take_ticket": "Take Over",
+    "late": "Late",
+    "hours_remaining": "h remaining",
+    "view": "View",
+    "inactive": "Inactive",
+    "online": "Online",
+    "offline": "Offline"
   },
   "admin": {
     "title": "National Dashboard",
@@ -126,7 +143,112 @@
     "dim_types": "Types",
     "dim_time": "Time",
     "dim_priority": "Priority",
-    "dim_agents": "Agents"
+    "dim_agents": "Agents",
+    "manual_assign": "Manual Surgical Assignment",
+    "history_desc": "Complete Claims Traceability",
+    "user": "User",
+    "ip": "IP Address",
+    "result": "Result",
+    "datetime": "Date and Time",
+    "live_supervision": "Live Quality Supervision",
+    "actions": "Actions"
+  },
+  "roles": {
+    "all": "All roles",
+    "agent": "Agent",
+    "agent_technique": "Technical Agent",
+    "agent_annexe": "ACTEL Agent",
+    "admin": "Manager",
+    "admin_it": "IT Admin",
+    "client": "Client",
+    "staff": "Staff (Experts, Admins...)"
+  },
+  "filters": {
+    "all_centres": "All centres",
+    "all_communes": "All communes",
+    "select_centre": "Select a centre",
+    "centre": "Centre...",
+    "reset": "Reset"
+  },
+  "reports": {
+    "generate": "Generate Report",
+    "download_excel": "Download Excel"
+  },
+  "demands": {
+    "title_agent": "My IT Requests",
+    "title_admin": "Centre IT Requests",
+    "title_it": "Received Requests",
+    "new_demand": "New Request",
+    "my_demand": "My own request",
+    "subject": "Subject",
+    "description": "Description",
+    "priority": "Priority",
+    "respond": "Respond",
+    "approve": "Approve",
+    "refuse": "Refuse",
+    "process": "Process",
+    "comment_placeholder": "Comment (optional)...",
+    "response_placeholder": "Response...",
+    "send_to_it": "Send to IT",
+    "direct_send": "Sent directly to IT Admin (no approval needed)",
+    "no_demands": "No requests at the moment.",
+    "no_demands_centre": "No requests in your centre.",
+    "pending_approval": "Pending approval",
+    "history": "History",
+    "to_process": "To process",
+    "processed": "Processed",
+    "all": "All",
+    "attach_file": "Attach file",
+    "subject_placeholder": "Ex: Network issue, Server access...",
+    "description_placeholder": "Describe your request in detail...",
+    "details_placeholder": "Details..."
+  },
+  "demands_priority": {
+    "basse": "Low",
+    "normale": "Normal",
+    "haute": "High",
+    "urgente": "Urgent"
+  },
+  "demands_status": {
+    "en_attente": "Pending",
+    "approuvee": "Approved",
+    "refusee": "Refused",
+    "traitee": "Processed",
+    "refusee_it": "Refused by IT"
+  },
+  "actel_form": {
+    "title": "New Client Claim",
+    "subtitle": "Walk-in at ACTEL agency",
+    "phone_label": "Client phone number",
+    "phone_placeholder": "Ex: 0551234567",
+    "service_label": "Service type",
+    "service_placeholder": "Select a service",
+    "title_label": "Title (optional)",
+    "title_placeholder": "Short claim title",
+    "description_label": "Description",
+    "description_placeholder": "Describe the client's problem...",
+    "submit": "Create Claim",
+    "error_required": "Please fill in all required fields.",
+    "error_generic": "Error creating ticket.",
+    "success": "created successfully!"
+  },
+  "validation": {
+    "firstname_required": "First name required",
+    "lastname_required": "Last name required",
+    "email_required": "Email required",
+    "phone_required": "Phone required",
+    "centre_required": "Centre required",
+    "letters_only": "Letters only (no digits)",
+    "min_password": "Minimum 8 characters",
+    "creation_error": "Error during creation.",
+    "edit_error": "Error during modification.",
+    "delete_error": "Error during deletion.",
+    "save_error": "Error saving"
+  },
+  "agent_mgmt": {
+    "save": "Save",
+    "delete_confirm": "Yes, delete",
+    "no_agents": "No agents found"
   },
   "errors": {
     "not_found_title": "Page Not Found",
@@ -146,5 +268,84 @@
     "close": "Close",
     "yes": "Yes",
     "no": "No"
+  },
+  "priority": {
+    "critique": "Critical",
+    "haute": "High",
+    "normale": "Normal",
+    "basse": "Low"
+  },
+  "agent_management": {
+    "placeholder_prenom": "First Name",
+    "placeholder_nom": "Last Name",
+    "placeholder_email": "name@at.dz",
+    "placeholder_password": "Minimum 8 characters",
+    "full_name": "Full Name",
+    "email_at": "AT Email",
+    "phone": "Phone",
+    "distribution_center": "Distribution Center"
+  },
+  "centre_management": {
+    "search": "Search for a center...",
+    "code_placeholder": "Ex: C01",
+    "name_placeholder": "Center Name"
+  },
+  "service_types": {
+    "PAS_TONALITE": {
+      "libelle": "No Dial Tone",
+      "description": "Complete absence of sound signal on the landline (no beep when picking up)"
+    },
+    "PAS_APPELS": {
+      "libelle": "No Outgoing/Incoming Calls",
+      "description": "Unable to make or receive phone calls"
+    },
+    "FRITURES_LIGNE": {
+      "libelle": "Line Crackling",
+      "description": "Crackling, static noise, or audible interference during calls"
+    },
+    "CHUTE_DEBIT": {
+      "libelle": "Internet Speed Drop",
+      "description": "Internet speed significantly lower than the contracted rate"
+    },
+    "PAS_INTERNET": {
+      "libelle": "No Internet",
+      "description": "Internet connection completely cut off, no browsing possible"
+    },
+    "LIAISON_SPECIALISEE": {
+      "libelle": "Dedicated Line",
+      "description": "Outage or degradation on a dedicated professional line"
+    },
+    "IDOOM_INTERNET_PRO": {
+      "libelle": "IDOOM Internet PRO",
+      "description": "Issue related to a professional IDOOM Internet subscription"
+    },
+    "INTRANET_VPN": {
+      "libelle": "Intranet/VPN",
+      "description": "Malfunction of the virtual private network or corporate intranet"
+    },
+    "SIGNAUX_NON_RETABLIS": {
+      "libelle": "Signals Not Restored",
+      "description": "Signals still absent after a previous technical intervention"
+    },
+    "PING_ELEVE": {
+      "libelle": "High Ping",
+      "description": "Abnormally high network latency affecting real-time services"
+    },
+    "UPLOAD_FAIBLE": {
+      "libelle": "Low Upload Speed",
+      "description": "Data upload speed very low compared to the subscribed rate"
+    },
+    "COUPURES_REPETITIVES": {
+      "libelle": "Frequent Disconnections",
+      "description": "Frequent and repeated disconnections of the internet line"
+    },
+    "COUVERTURE_4G": {
+      "libelle": "Network Coverage Issue (4G LTE)",
+      "description": "4G LTE signal absent or unstable in the coverage area"
+    },
+    "PAS_TONALITE_INTERNET": {
+      "libelle": "No Dial Tone / No Internet",
+      "description": "Simultaneous loss of dial tone and internet connection"
+    }
   }
 }

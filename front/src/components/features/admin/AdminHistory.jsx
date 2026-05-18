@@ -11,12 +11,12 @@ export function AdminHistory({ tickets = [] }) {
   const [searchQuery, setSearchQuery] = useState('');
 
   const STATUS_MAP = {
-    soumis:              { label: 'Nouveau',               cls: 'bg-indigo-100 text-indigo-700' },
+    soumis:              { label: t('portal.new'),               cls: 'bg-indigo-100 text-indigo-700' },
     en_cours:            { label: t('portal.in_progress'), cls: 'bg-amber-100 text-amber-800' },
     resolu:              { label: t('portal.resolved'),    cls: 'bg-emerald-100 text-emerald-800' },
     ferme:               { label: t('portal.closed'),      cls: 'bg-slate-100 text-slate-600' },
     rejete:              { label: t('portal.rejected'),    cls: 'bg-red-100 text-red-800' },
-    escalade:            { label: 'Escalad\u00e9',              cls: 'bg-purple-100 text-purple-800' },
+    escalade:            { label: t('portal.escalated'),              cls: 'bg-purple-100 text-purple-800' },
   };
 
   const filtered = tickets.filter(t => {
@@ -37,7 +37,7 @@ export function AdminHistory({ tickets = [] }) {
           </div>
           <div>
             <CardTitle className="text-2xl font-black text-slate-900 uppercase tracking-tighter">{t('sidebar.history')}</CardTitle>
-            <p className="text-[10px] font-black uppercase tracking-widest text-emerald-600 mt-1">Traçabilité complète des réclamations</p>
+            <p className="text-[10px] font-black uppercase tracking-widest text-emerald-600 mt-1">{t('admin.history_desc')}</p>
           </div>
         </div>
         <div className="relative">
@@ -50,11 +50,11 @@ export function AdminHistory({ tickets = [] }) {
         <Table>
           <TableHeader className="bg-slate-50/50">
             <TableRow>
-              <TableHead className="pl-10 text-[11px] font-black uppercase h-16">Ticket ID</TableHead>
+              <TableHead className="pl-10 text-[11px] font-black uppercase h-16">{t('portal.ticket_id')}</TableHead>
               <TableHead className="text-[11px] font-black uppercase">{t('portal.service')}</TableHead>
-              <TableHead className="text-[11px] font-black uppercase">Client</TableHead>
+              <TableHead className="text-[11px] font-black uppercase">{t('portal.client')}</TableHead>
               <TableHead className="text-[11px] font-black uppercase">{t('sidebar.experts')}</TableHead>
-              <TableHead className="text-[11px] font-black uppercase">Date</TableHead>
+              <TableHead className="text-[11px] font-black uppercase">{t('portal.date')}</TableHead>
               <TableHead className="pr-10 text-right text-[11px] font-black uppercase">{t('portal.status')}</TableHead>
             </TableRow>
           </TableHeader>

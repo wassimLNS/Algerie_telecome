@@ -210,8 +210,8 @@ export default function AdminView() {
               <select value={filterAgent} onChange={(e) => setFilterAgent(e.target.value)}
                 className="h-12 min-w-[12rem] text-[10px] font-black uppercase rounded-2xl shadow-sm bg-white border border-slate-200 px-4 focus:outline-none focus:ring-2 focus:ring-[#0055A4]/20 cursor-pointer">
                 <option value="all">{t('portal.all')}</option>
-                <option value="clients">Clients</option>
-                <option value="staff">Staff (Experts, Admins...)</option>
+                <option value="clients">{t('roles.client')}</option>
+                <option value="staff">{t('roles.staff')}</option>
               </select>
             ) : (
               <select value={filterAgent} onChange={(e) => setFilterAgent(e.target.value)}

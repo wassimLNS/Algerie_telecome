@@ -114,7 +114,7 @@ export function CentreManagement() {
           <Input 
             value={searchTerm} 
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Rechercher un centre..." 
+            placeholder={t('centre_management.search')} 
             className="pl-10 h-12 rounded-xl bg-slate-50 border-none font-medium"
           />
         </div>
@@ -194,11 +194,11 @@ export function CentreManagement() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-[10px] font-black text-slate-500 uppercase mb-1 block">Code</label>
-                  <Input value={formData.code} onChange={e => setFormData({...formData, code: e.target.value})} placeholder="Ex: C01" required />
+                  <Input value={formData.code} onChange={e => setFormData({...formData, code: e.target.value})} placeholder={t('centre_management.code_placeholder')} required />
                 </div>
                 <div>
                   <label className="text-[10px] font-black text-slate-500 uppercase mb-1 block">Nom</label>
-                  <Input value={formData.nom} onChange={e => setFormData({...formData, nom: e.target.value})} placeholder="Nom du centre" required />
+                  <Input value={formData.nom} onChange={e => setFormData({...formData, nom: e.target.value})} placeholder={t('centre_management.name_placeholder')} required />
                 </div>
               </div>
 

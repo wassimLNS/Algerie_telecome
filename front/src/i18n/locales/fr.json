@@ -25,7 +25,7 @@
     "brand_sub_client": "Espace Abonné",
     "brand_sub_agent": "Call Center",
     "brand_sub_technique": "Support Technique",
-    "brand_sub_annexe": "Support d'Annexe",
+    "brand_sub_annexe": "Support ACTEL",
     "brand_sub_admin": "Direction Générale",
     "my_space": "Mon Espace",
     "claims": "Réclamations",
@@ -45,8 +45,10 @@
     "role_client": "Abonné",
     "role_agent": "Agent Support",
     "role_technique": "Technicien",
-    "role_annexe": "Annexe",
-    "role_admin": "Administrateur"
+    "role_annexe": "ACTEL",
+    "role_admin": "Administrateur",
+    "new_claim": "+ Réclamation",
+    "it_requests": "Demandes IT"
   },
   "portal": {
     "title": "Mes Réclamations",
@@ -63,11 +65,20 @@
     "in_progress": "En cours",
     "resolved": "Résolu",
     "closed": "Fermé",
-    "rejected": "Rejeté"
+    "rejected": "Rejeté",
+    "all_statuses": "Tous les statuts",
+    "new": "Nouveau",
+    "escalated": "Escaladé",
+    "at_line": "Ligne AT",
+    "ticket": "Ticket",
+    "ticket_id": "Ticket ID",
+    "client": "Client",
+    "date": "Date"
   },
   "ticket_form": {
     "title": "Nouvelle Réclamation",
     "service_label": "Type de service",
+    "service_placeholder": "Sélectionner un service",
     "subject_label": "Objet",
     "description_label": "Description détaillée",
     "attachment_label": "Pièce jointe (optionnel)",
@@ -95,7 +106,13 @@
     "escalate": "Escalader",
     "resolve": "Résoudre",
     "close_ticket": "Clôturer",
-    "take_ticket": "Prendre en charge"
+    "take_ticket": "Prendre en charge",
+    "late": "En retard",
+    "hours_remaining": "h restantes",
+    "view": "Consulter",
+    "inactive": "Inactif",
+    "online": "En ligne",
+    "offline": "Hors ligne"
   },
   "admin": {
     "title": "Pilotage National",
@@ -126,7 +143,112 @@
     "dim_types": "Types",
     "dim_time": "Temps",
     "dim_priority": "Priorité",
-    "dim_agents": "Agents"
+    "dim_agents": "Agents",
+    "manual_assign": "Assignation Manuelle Chirurgicale",
+    "history_desc": "Traçabilité complète des réclamations",
+    "user": "Utilisateur",
+    "ip": "Adresse IP",
+    "result": "Résultat",
+    "datetime": "Date et Heure",
+    "live_supervision": "Supervision Qualité Live",
+    "actions": "Actions"
+  },
+  "roles": {
+    "all": "Tous les rôles",
+    "agent": "Agent",
+    "agent_technique": "Agent Technique",
+    "agent_annexe": "Agent ACTEL",
+    "admin": "Manager",
+    "admin_it": "Admin IT",
+    "client": "Client",
+    "staff": "Staff (Experts, Admins...)"
+  },
+  "filters": {
+    "all_centres": "Tous les centres",
+    "all_communes": "Toutes les communes",
+    "select_centre": "Sélectionner un centre",
+    "centre": "Centre...",
+    "reset": "Réinitialiser"
+  },
+  "reports": {
+    "generate": "Générer un Rapport",
+    "download_excel": "Télécharger Excel"
+  },
+  "demands": {
+    "title_agent": "Mes Demandes IT",
+    "title_admin": "Demandes IT du Centre",
+    "title_it": "Demandes Reçues",
+    "new_demand": "Nouvelle Demande",
+    "my_demand": "Ma propre demande",
+    "subject": "Sujet",
+    "description": "Description",
+    "priority": "Priorité",
+    "respond": "Répondre",
+    "approve": "Approuver",
+    "refuse": "Refuser",
+    "process": "Traiter",
+    "comment_placeholder": "Commentaire (optionnel)...",
+    "response_placeholder": "Réponse...",
+    "send_to_it": "Envoyer à l'IT",
+    "direct_send": "Envoyée directement à l'Admin IT (sans approbation)",
+    "no_demands": "Aucune demande pour le moment.",
+    "no_demands_centre": "Aucune demande dans votre centre.",
+    "pending_approval": "En attente d'approbation",
+    "history": "Historique",
+    "to_process": "À traiter",
+    "processed": "Traitées",
+    "all": "Toutes",
+    "attach_file": "Joindre un fichier",
+    "subject_placeholder": "Ex: Problème réseau, Accès serveur...",
+    "description_placeholder": "Décrivez votre demande en détail...",
+    "details_placeholder": "Détails..."
+  },
+  "demands_priority": {
+    "basse": "Basse",
+    "normale": "Normale",
+    "haute": "Haute",
+    "urgente": "Urgente"
+  },
+  "demands_status": {
+    "en_attente": "En attente",
+    "approuvee": "Approuvée",
+    "refusee": "Refusée",
+    "traitee": "Traitée",
+    "refusee_it": "Refusée IT"
+  },
+  "actel_form": {
+    "title": "Nouvelle Réclamation Client",
+    "subtitle": "Dépôt en agence ACTEL",
+    "phone_label": "Téléphone du client",
+    "phone_placeholder": "Ex: 0551234567",
+    "service_label": "Type de service",
+    "service_placeholder": "Sélectionner un service",
+    "title_label": "Titre (optionnel)",
+    "title_placeholder": "Titre court de la réclamation",
+    "description_label": "Description",
+    "description_placeholder": "Décrivez le problème du client...",
+    "submit": "Créer la Réclamation",
+    "error_required": "Veuillez remplir tous les champs obligatoires.",
+    "error_generic": "Erreur lors de la création du ticket.",
+    "success": "créé avec succès !"
+  },
+  "validation": {
+    "firstname_required": "Prénom requis",
+    "lastname_required": "Nom requis",
+    "email_required": "Email requis",
+    "phone_required": "Téléphone requis",
+    "centre_required": "Centre requis",
+    "letters_only": "Lettres uniquement (pas de chiffres)",
+    "min_password": "Minimum 8 caractères",
+    "creation_error": "Erreur lors de la création.",
+    "edit_error": "Erreur lors de la modification.",
+    "delete_error": "Erreur lors de la suppression.",
+    "save_error": "Erreur lors de l'enregistrement"
+  },
+  "agent_mgmt": {
+    "save": "Enregistrer",
+    "delete_confirm": "Oui, supprimer",
+    "no_agents": "Aucun agent trouvé"
   },
   "errors": {
     "not_found_title": "Page introuvable",
@@ -146,5 +268,84 @@
     "close": "Fermer",
     "yes": "Oui",
     "no": "Non"
+  },
+  "priority": {
+    "critique": "Critique",
+    "haute": "Haute",
+    "normale": "Normale",
+    "basse": "Basse"
+  },
+  "agent_management": {
+    "placeholder_prenom": "Prénom",
+    "placeholder_nom": "Nom",
+    "placeholder_email": "nom@at.dz",
+    "placeholder_password": "Minimum 8 caractères",
+    "full_name": "Nom Complet",
+    "email_at": "Email AT",
+    "phone": "Téléphone",
+    "distribution_center": "Centre de Distribution"
+  },
+  "centre_management": {
+    "search": "Rechercher un centre...",
+    "code_placeholder": "Ex: C01",
+    "name_placeholder": "Nom du centre"
+  },
+  "service_types": {
+    "PAS_TONALITE": {
+      "libelle": "Pas de tonalité",
+      "description": "Absence totale de signal sonore sur la ligne fixe (pas de bip au décrochage)"
+    },
+    "PAS_APPELS": {
+      "libelle": "Pas d appels émis/reçus",
+      "description": "Impossible de passer ou recevoir des appels téléphoniques"
+    },
+    "FRITURES_LIGNE": {
+      "libelle": "Fritures sur ligne",
+      "description": "Grésillements, bruits parasites ou interférences audibles pendant les appels"
+    },
+    "CHUTE_DEBIT": {
+      "libelle": "Chute de débit internet",
+      "description": "Vitesse internet nettement inférieure au débit contractuel"
+    },
+    "PAS_INTERNET": {
+      "libelle": "Pas d internet",
+      "description": "Connexion internet totalement coupée, aucune navigation possible"
+    },
+    "LIAISON_SPECIALISEE": {
+      "libelle": "Liaison spécialisée",
+      "description": "Panne ou dégradation sur une liaison dédiée professionnelle"
+    },
+    "IDOOM_INTERNET_PRO": {
+      "libelle": "IDOOM Internet PRO",
+      "description": "Problème lié à un abonnement IDOOM Internet professionnel"
+    },
+    "INTRANET_VPN": {
+      "libelle": "Intranet/VPN",
+      "description": "Dysfonctionnement du réseau privé virtuel ou de l intranet entreprise"
+    },
+    "SIGNAUX_NON_RETABLIS": {
+      "libelle": "Problèmes signaux non rétablis",
+      "description": "Signaux toujours absents après une intervention technique précédente"
+    },
+    "PING_ELEVE": {
+      "libelle": "Ping élevé",
+      "description": "Latence réseau anormalement élevée affectant les services en temps réel"
+    },
+    "UPLOAD_FAIBLE": {
+      "libelle": "Upload faible",
+      "description": "Vitesse d envoi de données très faible par rapport au débit souscrit"
+    },
+    "COUPURES_REPETITIVES": {
+      "libelle": "Coupures répétitives",
+      "description": "Déconnexions fréquentes et répétées de la ligne internet"
+    },
+    "COUVERTURE_4G": {
+      "libelle": "Problème de couverture réseau (4G LTE)",
+      "description": "Signal 4G LTE absent ou instable dans la zone de couverture"
+    },
+    "PAS_TONALITE_INTERNET": {
+      "libelle": "Pas de tonalité / pas d internet",
+      "description": "Perte simultanée de la tonalité et de la connexion internet"
+    }
   }
 }

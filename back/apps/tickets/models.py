@@ -28,7 +28,7 @@ class SourceTicket(models.TextChoices):
 
 class TypeEscalade(models.TextChoices):
     TECHNIQUE = 'technique', 'Technique'
-    ANNEXE    = 'annexe',    'Annexe'
+    ANNEXE    = 'annexe',    'ACTEL'
 
 
 # ============================================================

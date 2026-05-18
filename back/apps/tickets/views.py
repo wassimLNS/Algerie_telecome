@@ -304,3 +304,86 @@ class RetournerTicketView(APIView):
             'message': 'Ticket renvoyé à l\'agent d\'origine.',
             'ticket': TicketDetailSerializer(ticket).data
         })
+
+
+class CreerTicketACTELView(APIView):
+    """Permet à un agent ACTEL de créer un ticket pour un client qui se présente physiquement."""
+    permission_classes = [IsAuthenticated, EstAgentEscalade]
+
+    def post(self, request):
+        agent = request.user
+        if agent.role != 'agent_annexe':
+            return Response({'detail': 'Seul un agent ACTEL peut utiliser cette fonctionnalité.'}, status=status.HTTP_403_FORBIDDEN)
+
+        telephone = request.data.get('telephone')
+        type_service_id = request.data.get('type_service')
+        description = request.data.get('description', '')
+        titre = request.data.get('titre', '')
+
+        if not telephone or not type_service_id or not description:
+            return Response({'detail': 'Téléphone, type de service et description sont obligatoires.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Trouver le client par numéro de téléphone
+        from apps.users.models import Utilisateur
+        try:
+            client = Utilisateur.objects.get(telephone=telephone, role='client')
+        except Utilisateur.DoesNotExist:
+            return Response({'detail': f'Aucun client trouvé avec le numéro {telephone}.'}, status=status.HTTP_404_NOT_FOUND)
+
+        try:
+            type_service = TypeService.objects.get(id=type_service_id, actif=True)
+        except TypeService.DoesNotExist:
+            return Response({'detail': 'Type de service invalide.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Déterminer la priorité
+        priorite_map = {1: 'basse', 2: 'normale', 3: 'haute', 4: 'critique'}
+        priorite = priorite_map.get(type_service.priorite_defaut, 'normale')
+
+        # Créer le ticket
+        from django.utils import timezone
+        from datetime import timedelta
+        from apps.centres.models import ParametresCentre
+
+        centre = agent.centre or client.centre
+        if not centre:
+            return Response({'detail': 'Aucun centre associé.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        ticket = Ticket.objects.create(
+            client=client,
+            agent_annexe=agent,
+            centre=centre,
+            type_service=type_service,
+            titre=titre or description[:50],
+            description=description,
+            statut='escalade',
+            priorite=priorite,
+            source='web',
+            attribution_auto=False,
+        )
+
+        # SLA
+        try:
+            params = ParametresCentre.objects.get(centre=centre)
+            sla_map = {'normale': params.sla_heures_normale, 'haute': params.sla_heures_haute, 'critique': params.sla_heures_critique, 'basse': 72}
+            ticket.echeance_sla = timezone.now() + timedelta(hours=sla_map.get(priorite, 48))
+            ticket.save()
+        except ParametresCentre.DoesNotExist:
+            pass
+
+        # Créer l'escalade pour traçabilité
+        Escalade.objects.create(
+            ticket=ticket,
+            type_escalade='annexe',
+            agent_source=agent,
+            agent_cible=agent,
+            motif=f'Réclamation déposée en agence ACTEL par le client {client.prenom} {client.nom}.',
+        )
+
+        # Notification email au client
+        try:
+            from apps.notifications.emails import notifier_ticket_ouvert
+            notifier_ticket_ouvert(ticket)
+        except Exception:
+            pass
+
+        return Response(TicketDetailSerializer(ticket).data, status=status.HTTP_201_CREATED)
