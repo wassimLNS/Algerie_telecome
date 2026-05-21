@@ -212,21 +212,7 @@ export function CustomerChatDrawer({ ticket, messages = [], onClose, onSendMessa
               </div>
             )}
 
-            {/* ─── AI Summary ─── */}
-            {ticket?.resume_ia && (
-              <div className="flex justify-start">
-                <div className="max-w-[85%] p-5 rounded-3xl rounded-tl-none text-sm shadow-lg bg-purple-50 border border-purple-100 text-slate-800 text-left">
-                  <div className="flex items-center gap-2 mb-2">
-                    <BrainCircuit className="w-4 h-4 text-purple-600" />
-                    <p className="text-[10px] font-black uppercase text-purple-600 tracking-widest">Résumé IA (Triage Initial)</p>
-                  </div>
-                  <p className="font-bold leading-relaxed whitespace-pre-wrap">{ticket.resume_ia}</p>
-                  <p className="text-[9px] mt-3 font-black uppercase opacity-60 text-slate-400">
-                    Système
-                  </p>
-                </div>
-              </div>
-            )}
+
 
             {/* ─── Chat messages ─── */}
             <div className="space-y-4">
