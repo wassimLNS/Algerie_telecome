@@ -249,6 +249,7 @@ class DemandeITSerializer(serializers.ModelSerializer):
             'statut', 'statut_label',
             'reponse_admin', 'approuve_par', 'approuve_par_nom',
             'reponse_it', 'traite_par', 'traite_par_nom',
+            'fichier_reponse_nom',
             'created_at', 'updated_at',
         ]
 

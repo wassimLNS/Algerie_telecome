@@ -5,7 +5,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MessageSquare, Send, AlertCircle, FileText, Tag, Paperclip, Eye, X, Loader2, Calendar, Trash2, ImageIcon } from 'lucide-react';
+import { MessageSquare, Send, AlertCircle, FileText, Tag, Paperclip, Eye, X, Loader2, Calendar, Trash2, ImageIcon, BrainCircuit } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import api from '@/api/axios';
 import { deleteTicket } from '@/api/tickets';
@@ -211,6 +211,8 @@ export function CustomerChatDrawer({ ticket, messages = [], onClose, onSendMessa
                 </div>
               </div>
             )}
+
+
 
             {/* ─── Chat messages ─── */}
             <div className="space-y-4">

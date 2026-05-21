@@ -12,19 +12,19 @@ export function AdminTicketList({ tickets = [] }) {
   const [filterStatut, setFilterStatut] = useState('all');
 
   const STATUS_MAP = {
-    soumis: { label: 'Nouveau', color: 'bg-indigo-100 text-indigo-700' },
+    soumis: { label: t('portal.new'), color: 'bg-indigo-100 text-indigo-700' },
     en_cours: { label: t('portal.in_progress'), color: 'bg-amber-100 text-amber-800' },
     resolu: { label: t('portal.resolved'), color: 'bg-emerald-100 text-emerald-800' },
     ferme: { label: t('portal.closed'), color: 'bg-slate-100 text-slate-600' },
     rejete: { label: t('portal.rejected'), color: 'bg-red-100 text-red-800' },
-    escalade: { label: 'Escalad\u00e9', color: 'bg-purple-100 text-purple-800' },
+    escalade: { label: t('portal.escalated'), color: 'bg-purple-100 text-purple-800' },
   };
 
   const PRIORITY_MAP = {
-    critique: { label: 'Critique', color: 'bg-red-100 text-red-800 border-red-200' },
-    haute: { label: 'Haute', color: 'bg-orange-100 text-orange-800 border-orange-200' },
-    normale: { label: 'Normale', color: 'bg-blue-100 text-blue-800 border-blue-200' },
-    basse: { label: 'Basse', color: 'bg-slate-100 text-slate-600 border-slate-200' },
+    critique: { label: t('priority.critique'), color: 'bg-red-100 text-red-800 border-red-200' },
+    haute: { label: t('priority.haute'), color: 'bg-orange-100 text-orange-800 border-orange-200' },
+    normale: { label: t('priority.normale'), color: 'bg-blue-100 text-blue-800 border-blue-200' },
+    basse: { label: t('priority.basse'), color: 'bg-slate-100 text-slate-600 border-slate-200' },
   };
 
   const filtered = tickets.filter(t => {
@@ -73,12 +73,12 @@ export function AdminTicketList({ tickets = [] }) {
       <Table>
         <TableHeader className="bg-slate-50/50">
           <TableRow>
-            <TableHead className="pl-10 text-[11px] font-black uppercase h-16">Ticket</TableHead>
-            <TableHead className="text-[11px] font-black uppercase">Client</TableHead>
-            <TableHead className="text-[11px] font-black uppercase">Agent</TableHead>
+            <TableHead className="pl-10 text-[11px] font-black uppercase h-16">{t('portal.ticket')}</TableHead>
+            <TableHead className="text-[11px] font-black uppercase">{t('portal.client')}</TableHead>
+            <TableHead className="text-[11px] font-black uppercase">{t('roles.agent')}</TableHead>
             <TableHead className="text-[11px] font-black uppercase">{t('portal.status')}</TableHead>
             <TableHead className="text-[11px] font-black uppercase">{t('portal.priority')}</TableHead>
-            <TableHead className="pr-10 text-right text-[11px] font-black uppercase">Date</TableHead>
+            <TableHead className="pr-10 text-right text-[11px] font-black uppercase">{t('portal.date')}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>

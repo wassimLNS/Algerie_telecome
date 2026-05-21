@@ -38,6 +38,10 @@ class StatsGeneralesView(APIView):
         if end_date:
             tickets = tickets.filter(created_at__lte=end_date + 'T23:59:59Z')
 
+        en_retard = request.query_params.get('en_retard')
+        if en_retard == 'true':
+            tickets = tickets.filter(echeance_sla__lt=timezone.now()).exclude(statut__in=['resolu', 'ferme', 'rejete'])
+
         # Stats globales
         total           = tickets.count()
         ouverts         = tickets.filter(statut='soumis').count()
@@ -126,6 +130,10 @@ class PerformancesAgentsView(APIView):
                 tickets = tickets.filter(created_at__gte=start_date + 'T00:00:00Z')
             if end_date:
                 tickets = tickets.filter(created_at__lte=end_date + 'T23:59:59Z')
+
+            en_retard = request.query_params.get('en_retard')
+            if en_retard == 'true':
+                tickets = tickets.filter(echeance_sla__lt=timezone.now()).exclude(statut__in=['resolu', 'ferme', 'rejete'])
             
             total   = tickets.count()
 

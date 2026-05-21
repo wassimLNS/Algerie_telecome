@@ -39,12 +39,15 @@ class PieceJointeUploadSerializer(serializers.ModelSerializer):
 
 
 class CreerTicketSerializer(serializers.ModelSerializer):
+    historique_ia = serializers.CharField(write_only=True, required=False, allow_blank=True)
+
     class Meta:
         model  = Ticket
-        fields = ['type_service', 'titre', 'description']
+        fields = ['type_service', 'titre', 'description', 'historique_ia']
 
     def create(self, validated_data):
         client = self.context['request'].user
+        historique_ia = validated_data.pop('historique_ia', None)
 
         # Récupérer directement le centre du client
         centre = client.centre
@@ -56,7 +59,19 @@ class CreerTicketSerializer(serializers.ModelSerializer):
         priorite_map = {1: 'basse', 2: 'normale', 3: 'haute', 4: 'critique'}
         priorite = priorite_map.get(validated_data['type_service'].priorite_defaut, 'normale')
 
-        ticket = Ticket.objects.create(client=client, centre=centre, priorite=priorite, **validated_data)
+        # Générer le résumé IA si on a un historique
+        resume_ia = None
+        if historique_ia:
+            from apps.tickets.hf_triage import generer_resume_ia
+            resume_ia = generer_resume_ia(historique_ia)
+
+        ticket = Ticket.objects.create(
+            client=client, 
+            centre=centre, 
+            priorite=priorite, 
+            resume_ia=resume_ia,
+            **validated_data
+        )
 
         try:
             params = ParametresCentre.objects.get(centre=centre)
@@ -74,7 +89,7 @@ class CreerTicketSerializer(serializers.ModelSerializer):
             from apps.notifications.emails import notifier_ticket_ouvert
             notifier_ticket_ouvert(ticket)
         except Exception:
-            pass  # Ne pas bloquer la création si l'email échoue
+            pass  # Ne pas bloquer la crÃ©ation si l'email Ã©choue
 
         return ticket
 
@@ -109,7 +124,7 @@ class TicketListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model  = Ticket
-        fields = ['id', 'numero_ticket', 'titre', 'statut', 'priorite', 'source', 'type_service_libelle', 'client_nom', 'client_prenom', 'agent_nom', 'agent_prenom', 'centre_nom', 'nombre_messages', 'created_at', 'echeance_sla']
+        fields = ['id', 'numero_ticket', 'titre', 'statut', 'priorite', 'source', 'resume_ia', 'type_service_libelle', 'client_nom', 'client_prenom', 'agent_nom', 'agent_prenom', 'centre_nom', 'nombre_messages', 'created_at', 'echeance_sla']
 
     def get_nombre_messages(self, obj):
         return obj.messages.count()
@@ -124,10 +139,17 @@ class TicketDetailSerializer(serializers.ModelSerializer):
     client_tel     = serializers.CharField(source='client.telephone', read_only=True)
     agent_nom      = serializers.CharField(source='agent.nom', read_only=True)
     agent_prenom   = serializers.CharField(source='agent.prenom', read_only=True)
+    resume_escalade_ia = serializers.SerializerMethodField()
 
     class Meta:
         model  = Ticket
-        fields = ['id', 'numero_ticket', 'titre', 'description', 'statut', 'priorite', 'source', 'email_source', 'email_actif', 'type_service', 'client_nom', 'client_prenom', 'client_tel', 'agent_nom', 'agent_prenom', 'centre_nom', 'attribution_auto', 'resolution', 'satisfaction_client', 'commentaire_satisfaction', 'pieces_jointes', 'created_at', 'updated_at', 'pris_en_charge_a', 'resolu_a', 'ferme_a', 'echeance_sla']
+        fields = ['id', 'numero_ticket', 'titre', 'description', 'resume_ia', 'resume_escalade_ia', 'statut', 'priorite', 'source', 'email_source', 'email_actif', 'type_service', 'client_nom', 'client_prenom', 'client_tel', 'agent_nom', 'agent_prenom', 'centre_nom', 'attribution_auto', 'resolution', 'satisfaction_client', 'commentaire_satisfaction', 'pieces_jointes', 'created_at', 'updated_at', 'pris_en_charge_a', 'resolu_a', 'ferme_a', 'echeance_sla']
+
+    def get_resume_escalade_ia(self, obj):
+        escalade = obj.escalades.order_by('-created_at').first()
+        if escalade and escalade.resume_ia:
+            return escalade.resume_ia
+        return None
 
 
 class MettreAJourTicketSerializer(serializers.ModelSerializer):
@@ -145,7 +167,7 @@ class MettreAJourTicketSerializer(serializers.ModelSerializer):
         }
         autorises = transitions.get(ticket.statut, [])
         if value not in autorises:
-            raise serializers.ValidationError(f"Transition invalide : {ticket.statut} → {value}")
+            raise serializers.ValidationError(f"Transition invalide : {ticket.statut} â†’ {value}")
         return value
 
     def update(self, instance, validated_data):
@@ -176,7 +198,7 @@ class SatisfactionSerializer(serializers.ModelSerializer):
 
     def validate_satisfaction_client(self, value):
         if value not in range(1, 6):
-            raise serializers.ValidationError("La satisfaction doit être entre 1 et 5.")
+            raise serializers.ValidationError("La satisfaction doit Ãªtre entre 1 et 5.")
         return value
 
 
@@ -212,18 +234,18 @@ class CreerEscaladeSerializer(serializers.Serializer):
         client_commune = ticket.client.commune
         centre = ticket.centre
 
-        # Chercher un agent du bon rôle dans le même centre
+        # Chercher un agent du bon rÃ´le dans le mÃªme centre
         candidates = Utilisateur.objects.filter(
             role=target_role, centre=centre, actif=True
         )
 
-        # Priorité : même commune que le client
+        # PrioritÃ© : mÃªme commune que le client
         if client_commune:
             commune_match = candidates.filter(commune__iexact=client_commune)
             if commune_match.exists():
                 candidates = commune_match
 
-        # Sélectionner le moins chargé
+        # SÃ©lectionner le moins chargÃ©
         agent_cible = candidates.annotate(
             nb_actifs=Count('tickets_agent', filter=Q(tickets_agent__statut__in=['soumis', 'en_cours', 'escalade']))
         ).order_by('nb_actifs').first()
@@ -235,9 +257,24 @@ class CreerEscaladeSerializer(serializers.Serializer):
                 ticket.agent_annexe = agent_cible
 
         ticket.save()
+        # Générer le résumé IA de l'historique des messages
+        historique_chat = ""
+        messages = ticket.messages.all().order_by('created_at')
+        if messages.exists():
+            lignes = []
+            for m in messages:
+                role = "Client" if m.expediteur_role == 'client' else "Agent Helpdesk"
+                lignes.append(f"{role}: {m.contenu}")
+            historique_chat = "\n".join(lignes)
+
+        resume_ia = None
+        if historique_chat:
+            from apps.tickets.hf_triage import generer_resume_escalade
+            resume_ia = generer_resume_escalade(historique_chat)
+
         escalade = Escalade.objects.create(
             ticket=ticket, agent_source=agent_source,
-            agent_cible=agent_cible, **validated_data
+            agent_cible=agent_cible, resume_ia=resume_ia, **validated_data
         )
 
         # Notification email au client
@@ -248,3 +285,4 @@ class CreerEscaladeSerializer(serializers.Serializer):
             pass
 
         return escalade
+

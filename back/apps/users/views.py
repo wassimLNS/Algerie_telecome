@@ -509,6 +509,12 @@ class DemandesITView(APIView):
             demande.statut = StatutDemande.TRAITEE
             demande.traite_par = request.user
             demande.reponse_it = commentaire
+            # Handle file attachment
+            fichier = request.FILES.get('fichier')
+            if fichier:
+                demande.fichier_reponse_nom = fichier.name
+                demande.fichier_reponse_type = fichier.content_type
+                demande.fichier_reponse = fichier.read()
             demande.save()
         elif action == 'refuser':
             demande.statut = StatutDemande.REFUSEE_IT
@@ -519,3 +525,143 @@ class DemandesITView(APIView):
             return Response({'error': 'Action invalide (traiter/refuser)'}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response(DemandeITSerializer(demande).data)
+
+
+# ============================================================
+# RAPPORT CONNEXIONS (Admin IT)
+# ============================================================
+class RapportConnexionsView(APIView):
+    permission_classes = [IsAuthenticated, EstAdminIT]
+
+    def get(self, request):
+        """Génère un rapport XLSX des connexions pour un centre et une période donnée."""
+        from io import BytesIO
+        from django.http import HttpResponse
+        from openpyxl import Workbook
+        from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+
+        centre_id = request.query_params.get('centre')
+        date_from = request.query_params.get('date_from')
+        date_to = request.query_params.get('date_to')
+
+        if not centre_id or not date_from or not date_to:
+            return Response({'detail': 'Les paramètres centre, date_from et date_to sont obligatoires.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        from apps.centres.models import CentreDistribution
+        try:
+            centre = CentreDistribution.objects.get(id=centre_id)
+        except CentreDistribution.DoesNotExist:
+            return Response({'detail': 'Centre introuvable.'}, status=status.HTTP_404_NOT_FOUND)
+
+        users_ids = Utilisateur.objects.filter(centre=centre)
+        role_filter = request.query_params.get('role')
+        if role_filter:
+            users_ids = users_ids.filter(role=role_filter)
+        users_ids = users_ids.values_list('id', flat=True)
+        connexions = HistoriqueConnexion.objects.filter(
+            utilisateur_id__in=users_ids,
+            connecte_a__gte=date_from + 'T00:00:00Z',
+            connecte_a__lte=date_to + 'T23:59:59Z',
+        ).order_by('-connecte_a').select_related('utilisateur')
+
+        # Créer le workbook XLSX
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Rapport Connexions"
+
+        # Styles
+        title_font = Font(name='Calibri', bold=True, size=14, color='FFFFFF')
+        title_fill = PatternFill(start_color='0055A4', end_color='0055A4', fill_type='solid')
+        header_font = Font(name='Calibri', bold=True, size=10, color='FFFFFF')
+        header_fill = PatternFill(start_color='003D7A', end_color='003D7A', fill_type='solid')
+        row_even_fill = PatternFill(start_color='F0F4FA', end_color='F0F4FA', fill_type='solid')
+        success_font = Font(name='Calibri', size=10, color='059669')
+        fail_font = Font(name='Calibri', size=10, color='DC2626')
+        thin_border = Border(
+            left=Side(style='thin', color='D1D5DB'),
+            right=Side(style='thin', color='D1D5DB'),
+            top=Side(style='thin', color='D1D5DB'),
+            bottom=Side(style='thin', color='D1D5DB'),
+        )
+
+        # Titre
+        ws.merge_cells('A1:I1')
+        title_cell = ws['A1']
+        title_cell.value = f"Rapport de Connexions — {centre.nom}"
+        title_cell.font = title_font
+        title_cell.fill = title_fill
+        title_cell.alignment = Alignment(horizontal='center', vertical='center')
+        ws.row_dimensions[1].height = 35
+
+        # Sous-titre
+        ws.merge_cells('A2:I2')
+        sub = ws['A2']
+        sub.value = f"Période : {date_from} → {date_to}  |  Rôle : {role_filter or 'Tous'}  |  Total : {connexions.count()} connexions"
+        sub.font = Font(name='Calibri', italic=True, size=10, color='666666')
+        sub.alignment = Alignment(horizontal='center')
+        ws.row_dimensions[2].height = 22
+
+        # En-têtes
+        headers = ['Nom', 'Prénom', 'Email', 'Rôle', 'Adresse IP', 'Navigateur', 'Résultat', 'Connexion', 'Déconnexion']
+        for col_idx, header in enumerate(headers, 1):
+            cell = ws.cell(row=4, column=col_idx, value=header)
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.alignment = Alignment(horizontal='center', vertical='center')
+            cell.border = thin_border
+        ws.row_dimensions[4].height = 25
+
+        # Données
+        for row_idx, c in enumerate(connexions, 5):
+            u = c.utilisateur
+            row_data = [
+                u.nom, u.prenom, u.email or '',
+                u.get_role_display(),
+                c.ip_adresse or '', c.user_agent or '',
+                'Succès' if c.succes else f'Échec ({c.raison_echec or ""})',
+                c.connecte_a.strftime('%d/%m/%Y %H:%M:%S') if c.connecte_a else '',
+                c.deconnecte_a.strftime('%d/%m/%Y %H:%M:%S') if c.deconnecte_a else '',
+            ]
+            for col_idx, value in enumerate(row_data, 1):
+                cell = ws.cell(row=row_idx, column=col_idx, value=value)
+                cell.font = Font(name='Calibri', size=10)
+                cell.border = thin_border
+                if (row_idx - 5) % 2 == 1:
+                    cell.fill = row_even_fill
+                # Colorer le résultat
+                if col_idx == 7:
+                    cell.font = success_font if c.succes else fail_font
+
+        # Auto-largeur des colonnes
+        col_widths = [15, 15, 25, 16, 16, 30, 20, 20, 20]
+        for i, w in enumerate(col_widths, 1):
+            ws.column_dimensions[ws.cell(row=4, column=i).column_letter].width = w
+
+        # Sauvegarder dans un buffer
+        buffer = BytesIO()
+        wb.save(buffer)
+        buffer.seek(0)
+
+        filename = f"rapport_connexions_{centre.nom.replace(' ', '_')}_{date_from}_{date_to}.xlsx"
+        response = HttpResponse(buffer.getvalue(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return response
+
+
+class FichierDemandeITView(APIView):
+    """Télécharge le fichier joint à une réponse IT."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, demande_id):
+        try:
+            demande = DemandeIT.objects.get(id=demande_id)
+        except DemandeIT.DoesNotExist:
+            return Response({'error': 'Demande introuvable'}, status=status.HTTP_404_NOT_FOUND)
+
+        if not demande.fichier_reponse:
+            return Response({'error': 'Aucun fichier joint'}, status=status.HTTP_404_NOT_FOUND)
+
+        from django.http import HttpResponse as DjHttpResponse
+        response = DjHttpResponse(demande.fichier_reponse, content_type=demande.fichier_reponse_type or 'application/octet-stream')
+        response['Content-Disposition'] = f'attachment; filename="{demande.fichier_reponse_nom or "fichier"}"'
+        return response

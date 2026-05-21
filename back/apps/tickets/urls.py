@@ -1,5 +1,5 @@
-from django.urls import path
-from .views import (TypesServiceView, MesTicketsView, MonTicketDetailView, MesTicketsAgentView, TicketAgentDetailView, TicketsEscaladesView, TousLesTicketsView, AttribuerTicketView, PiecesJointesView, PieceJointeDownloadView, EscaladerTicketView, TicketHistoriqueClientView, ToggleEmailView, RetournerTicketView)
+﻿from django.urls import path
+from .views import (TypesServiceView, MesTicketsView, MonTicketDetailView, MesTicketsAgentView, TicketAgentDetailView, TicketsEscaladesView, TousLesTicketsView, AttribuerTicketView, PiecesJointesView, PieceJointeDownloadView, EscaladerTicketView, TicketHistoriqueClientView, ToggleEmailView, RetournerTicketView, CreerTicketACTELView, HFChatbotView)
 
 urlpatterns = [
     path('types-service/', TypesServiceView.as_view(), name='types-service'),
@@ -11,9 +11,11 @@ urlpatterns = [
     path('agent/mes-tickets/<uuid:ticket_id>/escalader/', EscaladerTicketView.as_view(), name='escalader-ticket'),
     path('escalades/', TicketsEscaladesView.as_view(), name='tickets-escalades'),
     path('escalades/<uuid:ticket_id>/retourner/', RetournerTicketView.as_view(), name='retourner-ticket'),
+    path('actel/creer/', CreerTicketACTELView.as_view(), name='creer-ticket-actel'),
     path('admin/tous/', TousLesTicketsView.as_view(), name='tous-tickets'),
     path('admin/<uuid:ticket_id>/attribuer/', AttribuerTicketView.as_view(), name='attribuer-ticket'),
     path('<uuid:ticket_id>/pieces-jointes/', PiecesJointesView.as_view(), name='pieces-jointes'),
     path('pieces-jointes/<int:piece_id>/download/', PieceJointeDownloadView.as_view(), name='piece-jointe-download'),
     path('<uuid:ticket_id>/toggle-email/', ToggleEmailView.as_view(), name='toggle-email'),
+    path('chat-support/', HFChatbotView.as_view(), name='chat-support'),
 ]

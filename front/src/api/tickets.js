@@ -6,6 +6,12 @@ export const getServiceTypes = async () => {
   return response.data;
 };
 
+// Chat with HF Support Bot
+export const chatWithSupport = async (payload) => {
+  const response = await api.post('/tickets/chat-support/', payload);
+  return response.data;
+};
+
 // Get client's own tickets
 export const getMyTickets = async () => {
   const response = await api.get('/tickets/mes-tickets/');
@@ -98,6 +104,12 @@ export const getEscalatedTicketsHistory = async () => {
 // Return ticket to original agent (tech/annexe only)
 export const returnTicket = async (ticketId, commentaire = '') => {
   const response = await api.post(`/tickets/escalades/${ticketId}/retourner/`, { commentaire });
+  return response.data;
+};
+
+// Create ticket on behalf of a walk-in client (ACTEL agent only)
+export const createTicketACTEL = async (data) => {
+  const response = await api.post('/tickets/actel/creer/', data);
   return response.data;
 };
 

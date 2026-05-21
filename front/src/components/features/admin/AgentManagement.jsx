@@ -10,24 +10,27 @@ import { cn } from '@/lib/utils';
 import { createAgent, deleteAgent, updateAgent } from '@/api/admin';
 import api from '@/api/axios';
 
-const ROLE_MAP = {
-  agent:            { label: 'Agent',       color: 'bg-blue-100 text-blue-800',    icon: Shield },
-  agent_technique:  { label: 'Technicien',  color: 'bg-purple-100 text-purple-800', icon: Cpu },
-  agent_annexe:     { label: 'Annexe',      color: 'bg-orange-100 text-orange-800', icon: MapPin },
-  admin:            { label: 'Manager',     color: 'bg-emerald-100 text-emerald-800', icon: Award },
-};
 
-function getStatusInfo(agent) {
-  if (!agent.actif) return { label: 'Inactif', dot: 'bg-red-500' };
-  if (agent.derniere_connexion) {
-    const diff = Date.now() - new Date(agent.derniere_connexion).getTime();
-    if (diff < 30 * 60 * 1000) return { label: 'Online', dot: 'bg-emerald-500 animate-pulse' };
-  }
-  return { label: 'Offline', dot: 'bg-amber-500' };
-}
+
+
 
 export function AgentManagement({ agents = [], performances: rawPerformances = [], onRefresh, onAuditAgent, readOnly = false }) {
   const { t } = useTranslation();
+  const ROLE_MAP = {
+    agent:            { label: t('roles.agent'),       color: 'bg-blue-100 text-blue-800',    icon: Shield },
+    agent_technique:  { label: t('roles.tech'),  color: 'bg-purple-100 text-purple-800', icon: Cpu },
+    agent_annexe:     { label: t('roles.actel'),      color: 'bg-orange-100 text-orange-800', icon: MapPin },
+    admin:            { label: t('roles.manager'),     color: 'bg-emerald-100 text-emerald-800', icon: Award },
+  };
+
+  function getStatusInfo(agent) {
+    if (!agent.actif) return { label: t('agent.inactive'), dot: 'bg-red-500' };
+    if (agent.derniere_connexion) {
+      const diff = Date.now() - new Date(agent.derniere_connexion).getTime();
+      if (diff < 30 * 60 * 1000) return { label: t('agent.online'), dot: 'bg-emerald-500 animate-pulse' };
+    }
+    return { label: t('agent.offline'), dot: 'bg-amber-500' };
+  }
   const performances = Array.isArray(rawPerformances) ? rawPerformances : [];
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({
@@ -205,18 +208,18 @@ export function AgentManagement({ agents = [], performances: rawPerformances = [
             <Filter className="w-4 h-4 text-slate-400" />
             <select value={filterRole} onChange={(e) => { setFilterRole(e.target.value); setFilterCommune(''); }}
               className="px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold bg-white cursor-pointer focus:ring-2 focus:ring-[#0055A4]/30 focus:outline-none">
-              <option value="">Tous les rôles</option>
-              <option value="agent">Agent Support</option>
-              <option value="agent_technique">Agent Technique</option>
-              <option value="agent_annexe">Agent Annexe</option>
-              <option value="admin">Manager</option>
+              <option value="">{t('roles.all')}</option>
+              <option value="agent">{t('roles.agent')}</option>
+              <option value="agent_technique">{t('roles.agent_technique')}</option>
+              <option value="agent_annexe">{t('roles.agent_annexe')}</option>
+              <option value="admin">{t('roles.admin')}</option>
             </select>
           </div>
           <div className="flex items-center gap-2">
             <Building2 className="w-4 h-4 text-slate-400" />
             <select value={filterCentre} onChange={(e) => { setFilterCentre(e.target.value); setFilterCommune(''); }}
               className="px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold bg-white cursor-pointer focus:ring-2 focus:ring-[#0055A4]/30 focus:outline-none">
-              <option value="">Tous les centres</option>
+              <option value="">{t('filters.all_centres')}</option>
               {centres.map(c => <option key={c.id} value={c.id}>{c.nom}</option>)}
             </select>
           </div>
@@ -225,7 +228,7 @@ export function AgentManagement({ agents = [], performances: rawPerformances = [
             <MapPin className="w-4 h-4 text-slate-400" />
             <select value={filterCommune} onChange={(e) => setFilterCommune(e.target.value)}
               className="px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold bg-white cursor-pointer focus:ring-2 focus:ring-[#0055A4]/30 focus:outline-none">
-              <option value="">Toutes les communes</option>
+              <option value="">{t('filters.all_communes')}</option>
               {(centres.find(c => String(c.id) === String(filterCentre))?.communes || []).map(com => (
                 <option key={com} value={com}>{com}</option>
               ))}
@@ -251,7 +254,7 @@ export function AgentManagement({ agents = [], performances: rawPerformances = [
             </div>
             <div>
               <CardTitle className="text-2xl font-black text-slate-900 uppercase tracking-tighter">{t('admin.agents_management')}</CardTitle>
-              <p className="text-[10px] font-black uppercase tracking-widest text-emerald-600 mt-1">Supervision Qualité Live</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-emerald-600 mt-1">{t('admin.live_supervision')}</p>
             </div>
           </CardHeader>
           <CardContent className="p-0">
@@ -262,7 +265,7 @@ export function AgentManagement({ agents = [], performances: rawPerformances = [
                   <TableHead className="text-[11px] font-black uppercase">{t('portal.status')}</TableHead>
                   <TableHead className="text-[11px] font-black uppercase">Charge (Real-time)</TableHead>
 
-                  <TableHead className="pr-10 text-right text-[11px] font-black uppercase">Actions</TableHead>
+                  <TableHead className="pr-10 text-right text-[11px] font-black uppercase">{t('admin.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -350,10 +353,10 @@ export function AgentManagement({ agents = [], performances: rawPerformances = [
             </div>
             <form onSubmit={handleCreate} className="p-8 space-y-4">
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase text-slate-500 block">Nom Complet</label>
+                <label className="text-[10px] font-black uppercase text-slate-500 block">{t('agent_management.full_name')}</label>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <input type="text" value={formData.prenom} placeholder="Prénom"
+                    <input type="text" value={formData.prenom} placeholder={t('agent_management.placeholder_prenom')}
                       onChange={(e) => {
                         const val = e.target.value.replace(/[^A-Za-zÀ-ÿ\s\-']/g, '');
                         setFormData(prev => ({ ...prev, prenom: val }));
@@ -363,7 +366,7 @@ export function AgentManagement({ agents = [], performances: rawPerformances = [
                     {fieldErrors.prenom && <p className="text-[10px] font-bold text-red-500 mt-1">{fieldErrors.prenom}</p>}
                   </div>
                   <div>
-                    <input type="text" value={formData.nom} placeholder="Nom"
+                    <input type="text" value={formData.nom} placeholder={t('agent_management.placeholder_nom')}
                       onChange={(e) => {
                         const val = e.target.value.replace(/[^A-Za-zÀ-ÿ\s\-']/g, '');
                         setFormData(prev => ({ ...prev, nom: val }));
@@ -375,8 +378,8 @@ export function AgentManagement({ agents = [], performances: rawPerformances = [
                 </div>
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase text-slate-500 block">Email AT</label>
-                <input type="email" value={formData.email} placeholder="nom@at.dz"
+                <label className="text-[10px] font-black uppercase text-slate-500 block">{t('agent_management.email_at')}</label>
+                <input type="email" value={formData.email} placeholder={t('agent_management.placeholder_email')}
                   onChange={(e) => {
                     setFormData(prev => ({ ...prev, email: e.target.value }));
                     setFieldErrors(prev => ({ ...prev, email: undefined }));
@@ -386,7 +389,7 @@ export function AgentManagement({ agents = [], performances: rawPerformances = [
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase text-slate-500 block">Téléphone</label>
+                  <label className="text-[10px] font-black uppercase text-slate-500 block">{t('agent_management.phone')}</label>
                   <input type="tel" value={formData.telephone} placeholder="0770123456" maxLength={10}
                     onChange={(e) => {
                       const val = e.target.value.replace(/[^0-9]/g, '').slice(0, 10);
@@ -401,15 +404,15 @@ export function AgentManagement({ agents = [], performances: rawPerformances = [
                   <select value={formData.role}
                     onChange={(e) => setFormData(prev => ({ ...prev, role: e.target.value }))}
                     className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#0055A4]/30 bg-white cursor-pointer">
-                    <option value="agent">Agent Support</option>
-                    <option value="agent_technique">Agent Technique</option>
-                    <option value="agent_annexe">Agent Annexe</option>
-                    <option value="admin">Manager</option>
+                    <option value="agent">{t('roles.agent')}</option>
+                    <option value="agent_technique">{t('roles.agent_technique')}</option>
+                    <option value="agent_annexe">{t('roles.agent_annexe')}</option>
+                    <option value="admin">{t('roles.admin')}</option>
                   </select>
                 </div>
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase text-slate-500 block">Centre de Distribution</label>
+                <label className="text-[10px] font-black uppercase text-slate-500 block">{t('agent_management.distribution_center')}</label>
                 <select value={formData.centre}
                   onChange={(e) => setFormData(prev => ({ ...prev, centre: e.target.value }))}
                   className={`w-full px-4 py-3 rounded-xl border text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#0055A4]/30 bg-white cursor-pointer ${fieldErrors.centre ? 'border-red-400 bg-red-50/50' : 'border-slate-200'}`}>
@@ -420,11 +423,11 @@ export function AgentManagement({ agents = [], performances: rawPerformances = [
               </div>
               {(formData.role === 'agent_technique' || formData.role === 'agent_annexe') && (
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase text-slate-500 block">Commune de Travail</label>
+                <label className="text-[10px] font-black uppercase text-slate-500 block">{t('agent_management.commune')}</label>
                 <select value={formData.commune}
                   onChange={(e) => setFormData(prev => ({ ...prev, commune: e.target.value }))}
                   className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#0055A4]/30 bg-white cursor-pointer">
-                  <option value="">— Sélectionner une commune —</option>
+                  <option value="">{t('agent_management.select_commune')}</option>
                   {(centres.find(c => String(c.id) === String(formData.centre))?.communes || []).map(com => (
                     <option key={com} value={com}>{com}</option>
                   ))}
@@ -434,7 +437,7 @@ export function AgentManagement({ agents = [], performances: rawPerformances = [
               )}
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase text-slate-500 block">Mot de Passe</label>
-                <input type="password" value={formData.mot_de_passe} placeholder="Minimum 8 caractères"
+                <input type="password" value={formData.mot_de_passe} placeholder={t('agent_management.placeholder_password')}
                   onChange={(e) => {
                     setFormData(prev => ({ ...prev, mot_de_passe: e.target.value }));
                     setFieldErrors(prev => ({ ...prev, mot_de_passe: undefined }));
@@ -479,10 +482,10 @@ export function AgentManagement({ agents = [], performances: rawPerformances = [
             <form onSubmit={handleEdit} className="p-8 space-y-4">
               {/* Nom / Prénom */}
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase text-slate-500 block">Nom Complet</label>
+                <label className="text-[10px] font-black uppercase text-slate-500 block">{t('agent_management.full_name')}</label>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <input type="text" value={editData.prenom} placeholder="Prénom"
+                    <input type="text" value={editData.prenom} placeholder={t('agent_management.placeholder_prenom')}
                       onChange={(e) => {
                         const val = e.target.value.replace(/[^A-Za-zÀ-ÿ\s\-']/g, '');
                         setEditData(prev => ({ ...prev, prenom: val }));
@@ -492,7 +495,7 @@ export function AgentManagement({ agents = [], performances: rawPerformances = [
                     {editFieldErrors.prenom && <p className="text-[10px] font-bold text-red-500 mt-1">{editFieldErrors.prenom}</p>}
                   </div>
                   <div>
-                    <input type="text" value={editData.nom} placeholder="Nom"
+                    <input type="text" value={editData.nom} placeholder={t('agent_management.placeholder_nom')}
                       onChange={(e) => {
                         const val = e.target.value.replace(/[^A-Za-zÀ-ÿ\s\-']/g, '');
                         setEditData(prev => ({ ...prev, nom: val }));
@@ -506,7 +509,7 @@ export function AgentManagement({ agents = [], performances: rawPerformances = [
               {/* Email */}
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase text-slate-500 block">Email</label>
-                <input type="email" value={editData.email} placeholder="nom@at.dz"
+                <input type="email" value={editData.email} placeholder={t('agent_management.placeholder_email')}
                   onChange={(e) => {
                     setEditData(prev => ({ ...prev, email: e.target.value }));
                     setEditFieldErrors(prev => ({ ...prev, email: undefined }));
@@ -517,7 +520,7 @@ export function AgentManagement({ agents = [], performances: rawPerformances = [
               {/* Téléphone + Rôle */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase text-slate-500 block">Téléphone</label>
+                  <label className="text-[10px] font-black uppercase text-slate-500 block">{t('agent_management.phone')}</label>
                   <input type="tel" value={editData.telephone} placeholder="0770123456" maxLength={10}
                     onChange={(e) => {
                       const val = e.target.value.replace(/[^0-9]/g, '').slice(0, 10);
@@ -532,9 +535,9 @@ export function AgentManagement({ agents = [], performances: rawPerformances = [
                   <select value={editData.role}
                     onChange={(e) => setEditData(prev => ({ ...prev, role: e.target.value }))}
                     className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#0055A4]/30 bg-white cursor-pointer">
-                    <option value="agent">Agent Support</option>
-                    <option value="agent_technique">Agent Technique National</option>
-                    <option value="agent_annexe">Agent Annexe Régionale</option>
+                    <option value="agent">{t('roles.agent')}</option>
+                    <option value="agent_technique">{t('roles.agent_technique')}</option>
+                    <option value="agent_annexe">{t('roles.agent_annexe')}</option>
                   </select>
                 </div>
                 <div className="space-y-2">
@@ -545,7 +548,7 @@ export function AgentManagement({ agents = [], performances: rawPerformances = [
                       setEditFieldErrors(prev => ({ ...prev, centre: undefined }));
                     }}
                     className={`w-full px-4 py-3 rounded-xl border text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#0055A4]/30 bg-white cursor-pointer ${editFieldErrors.centre ? 'border-red-400 bg-red-50/50' : 'border-slate-200'}`}>
-                    <option value="">Sélectionner un centre</option>
+                    <option value="">{t('filters.select_centre')}</option>
                     {centres.map(c => (
                       <option key={c.id} value={c.id}>{c.nom} ({c.wilaya})</option>
                     ))}
@@ -593,7 +596,7 @@ export function AgentManagement({ agents = [], performances: rawPerformances = [
                 </button>
                 <Button type="submit" disabled={editSubmitting}
                   className="flex-1 h-12 rounded-xl font-black text-xs uppercase shadow-lg bg-[#0055A4] hover:bg-[#003d7a] text-white cursor-pointer">
-                  {editSubmitting ? '...' : 'Enregistrer'}
+                  {editSubmitting ? '...' : t('agent_mgmt.save')}
                 </Button>
               </div>
 
@@ -618,7 +621,7 @@ export function AgentManagement({ agents = [], performances: rawPerformances = [
                       </button>
                       <button type="button" onClick={handleDelete} disabled={editSubmitting}
                         className="flex-1 h-10 rounded-xl font-black text-[10px] uppercase text-white bg-red-500 hover:bg-red-600 shadow-lg transition-colors cursor-pointer">
-                        {editSubmitting ? '...' : 'Oui, supprimer'}
+                        {editSubmitting ? '...' : t('agent_mgmt.delete_confirm')}
                       </button>
                     </div>
                   </div>

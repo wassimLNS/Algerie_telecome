@@ -11,19 +11,19 @@ export function ActiveQueue({ tickets, onOpenTicket, isHistory = false }) {
   const { t } = useTranslation();
 
   const STATUS_MAP = {
-    soumis: { label: 'Nouveau', color: 'bg-indigo-100 text-indigo-700' },
+    soumis: { label: t('portal.new'), color: 'bg-indigo-100 text-indigo-700' },
     en_cours: { label: t('portal.in_progress'), color: 'bg-amber-100 text-amber-800' },
     resolu: { label: t('portal.resolved'), color: 'bg-emerald-100 text-emerald-800' },
     ferme: { label: t('portal.closed'), color: 'bg-slate-100 text-slate-600' },
     rejete: { label: t('portal.rejected'), color: 'bg-red-100 text-red-800' },
-    escalade: { label: 'Escalad\u00e9', color: 'bg-purple-100 text-purple-800' },
+    escalade: { label: t('portal.escalated'), color: 'bg-purple-100 text-purple-800' },
   };
 
   const PRIORITY_MAP = {
-    critique: { label: 'Critique', color: 'bg-red-100 text-red-800 border-red-200' },
-    haute: { label: 'Haute', color: 'bg-orange-100 text-orange-800 border-orange-200' },
-    normale: { label: 'Normale', color: 'bg-blue-100 text-blue-800 border-blue-200' },
-    basse: { label: 'Basse', color: 'bg-slate-100 text-slate-600 border-slate-200' },
+    critique: { label: t('priority.critique'), color: 'bg-red-100 text-red-800 border-red-200' },
+    haute: { label: t('priority.haute'), color: 'bg-orange-100 text-orange-800 border-orange-200' },
+    normale: { label: t('priority.normale'), color: 'bg-blue-100 text-blue-800 border-blue-200' },
+    basse: { label: t('priority.basse'), color: 'bg-slate-100 text-slate-600 border-slate-200' },
   };
 
   function getSlaInfo(ticket) {
@@ -114,7 +114,7 @@ export function ActiveQueue({ tickets, onOpenTicket, isHistory = false }) {
                             <Clock className="w-3.5 h-3.5 text-emerald-500" />
                           )}
                           <span className={cn("text-[10px] font-black", sla.isLate ? "text-red-600" : "text-emerald-600")}>
-                            {sla.remains !== null ? (sla.isLate ? 'En retard' : `${sla.remains}h restantes`) : '—'}
+                            {sla.remains !== null ? (sla.isLate ? t('agent.late') : `${sla.remains} ${t('agent.hours_remaining')}`) : '—'}
                           </span>
                         </div>
                         <Progress value={sla.percent} className="h-1.5 w-32" />
@@ -129,7 +129,7 @@ export function ActiveQueue({ tickets, onOpenTicket, isHistory = false }) {
                       className="h-11 px-6 rounded-xl font-black text-[10px] uppercase shadow-lg bg-[#0055A4] text-white cursor-pointer"
                       onClick={() => onOpenTicket(ticket)}
                     >
-                      Consulter <ChevronRight className="w-4 h-4 ml-2" />
+                      {t('agent.view')} <ChevronRight className="w-4 h-4 ml-2" />
                     </Button>
                   </TableCell>
                 </TableRow>

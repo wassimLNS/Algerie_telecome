@@ -7,15 +7,16 @@ import { Database, UserCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { assignTicket } from '@/api/admin';
 
-const PRIORITY_MAP = {
-  critique: { label: 'Critique', cls: 'border-red-500/30 text-red-600 bg-red-50' },
-  haute:    { label: 'Haute',    cls: 'border-red-500/30 text-red-600 bg-red-50' },
-  normale:  { label: 'Normale',  cls: 'border-slate-200 text-slate-600 bg-white' },
-  basse:    { label: 'Basse',    cls: 'border-slate-200 text-slate-500 bg-white' },
-};
-
 export function AdminAssignment({ tickets = [], agents = [], onRefresh }) {
   const { t } = useTranslation();
+
+  const PRIORITE_MAP = {
+    critique: { label: t('priority.critique'), cls: 'border-red-500/30 text-red-600 bg-red-50' },
+    haute:    { label: t('priority.haute'),    cls: 'border-red-500/30 text-red-600 bg-red-50' },
+    normale:  { label: t('priority.normale'),  cls: 'border-slate-200 text-slate-600 bg-white' },
+    basse:    { label: t('priority.basse'),    cls: 'border-slate-200 text-slate-500 bg-white' },
+  };
+
   const unassigned = tickets.filter(t => !t.agent_nom && t.statut !== 'resolu' && t.statut !== 'ferme');
   const onlineAgents = agents.filter(a => a.actif);
 
@@ -36,14 +37,14 @@ export function AdminAssignment({ tickets = [], agents = [], onRefresh }) {
         </div>
         <div>
           <CardTitle className="text-2xl font-black text-slate-900 uppercase tracking-tighter">{t('sidebar.assignments')}</CardTitle>
-          <CardDescription className="text-[10px] font-black uppercase tracking-widest text-emerald-600 mt-1">Assignation Manuelle Chirurgicale</CardDescription>
+          <CardDescription className="text-[10px] font-black uppercase tracking-widest text-emerald-600 mt-1">{t('admin.manual_assign')}</CardDescription>
         </div>
       </CardHeader>
       <CardContent className="p-0">
         <Table>
           <TableHeader className="bg-slate-50/50">
             <TableRow>
-              <TableHead className="pl-10 text-[11px] font-black uppercase h-16">Ticket</TableHead>
+              <TableHead className="pl-10 text-[11px] font-black uppercase h-16">{t('portal.ticket')}</TableHead>
               <TableHead className="text-[11px] font-black uppercase">{t('portal.service')}</TableHead>
               <TableHead className="text-[11px] font-black uppercase">{t('portal.priority')}</TableHead>
               <TableHead className="text-[11px] font-black uppercase">{t('portal.status')}</TableHead>
@@ -59,7 +60,7 @@ export function AdminAssignment({ tickets = [], agents = [], onRefresh }) {
               </TableRow>
             ) : (
               unassigned.map((ticket) => {
-                const prio = PRIORITY_MAP[ticket.priorite] || PRIORITY_MAP.normale;
+                const prio = PRIORITE_MAP[ticket.priorite] || PRIORITE_MAP.normale;
                 return (
                   <TableRow key={ticket.id} className="h-20 hover:bg-slate-50 transition-all">
                     <TableCell className="pl-10">

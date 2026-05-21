@@ -1,4 +1,4 @@
-from rest_framework import status
+﻿from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -10,7 +10,7 @@ from apps.tickets.models import Ticket
 
 
 def get_expediteur_type(user):
-    """Retourne le type d'expéditeur selon le rôle"""
+    """Retourne le type d'expÃ©diteur selon le rÃ´le"""
     role_map = {
         'client':          'client',
         'agent':           'agent',
@@ -22,7 +22,7 @@ def get_expediteur_type(user):
 
 
 def verifier_acces_ticket(user, ticket):
-    """Vérifie si l'utilisateur a accès à la discussion du ticket"""
+    """VÃ©rifie si l'utilisateur a accÃ¨s Ã  la discussion du ticket"""
     if user.role == 'client':
         return ticket.client == user
     elif user.role == 'agent':
@@ -49,13 +49,13 @@ class MessagesTicketView(APIView):
             return None
 
     def get(self, request, ticket_id):
-        """Récupérer tous les messages d'un ticket"""
+        """RÃ©cupÃ©rer tous les messages d'un ticket"""
         ticket = self.get_ticket(ticket_id)
         if not ticket:
             return Response({'error': 'Ticket introuvable'}, status=status.HTTP_404_NOT_FOUND)
 
         if not verifier_acces_ticket(request.user, ticket):
-            return Response({'error': 'Accès refusé'}, status=status.HTTP_403_FORBIDDEN)
+            return Response({'error': 'AccÃ¨s refusÃ©'}, status=status.HTTP_403_FORBIDDEN)
 
         messages = ticket.messages.all().order_by('created_at')
 
@@ -83,11 +83,11 @@ class MessagesTicketView(APIView):
             return Response({'error': 'Ticket introuvable'}, status=status.HTTP_404_NOT_FOUND)
 
         if not verifier_acces_ticket(request.user, ticket):
-            return Response({'error': 'Accès refusé'}, status=status.HTTP_403_FORBIDDEN)
+            return Response({'error': 'AccÃ¨s refusÃ©'}, status=status.HTTP_403_FORBIDDEN)
 
         if ticket.statut in ['ferme', 'rejete']:
             return Response(
-                {'error': 'Impossible d\'envoyer un message sur un ticket fermé ou rejeté'},
+                {'error': 'Impossible d\'envoyer un message sur un ticket fermÃ© ou rejetÃ©'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -111,9 +111,9 @@ class MessagesTicketView(APIView):
 
             contenu = serializer.validated_data.get('contenu', '').strip()
             if not contenu and piece_jointe:
-                contenu = f"📎 {piece_jointe.nom_fichier}"
+                contenu = f"ðŸ“Ž {piece_jointe.nom_fichier}"
 
-            # Filtrer les mots inappropriés
+            # Filtrer les mots inappropriÃ©s
             from apps.chat.profanity_filter import censurer_message
             contenu, was_censored = censurer_message(contenu)
 
@@ -127,7 +127,7 @@ class MessagesTicketView(APIView):
                 lu_par_agent=(request.user.role != 'client'),
             )
             
-            # Changer le statut du ticket si un agent répond
+            # Changer le statut du ticket si un agent rÃ©pond
             if request.user.role != 'client' and ticket.statut in ['soumis']:
                 ticket.statut = 'en_cours'
                 ticket.save()
@@ -150,7 +150,7 @@ class MessagesTicketView(APIView):
                     }, timeout=5)
                 except Exception as e:
                     import logging
-                    logging.getLogger(__name__).warning(f"Webhook n8n échoué: {e}")
+                    logging.getLogger(__name__).warning(f"Webhook n8n Ã©chouÃ©: {e}")
                 message.via_email = True
                 message.save(update_fields=['via_email'])
 
@@ -165,7 +165,7 @@ class MessagesNonLusView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        """Nombre de messages non lus pour l'utilisateur connecté"""
+        """Nombre de messages non lus pour l'utilisateur connectÃ©"""
         if request.user.role == 'client':
             count = Message.objects.filter(
                 ticket__client=request.user,
@@ -181,43 +181,43 @@ class MessagesNonLusView(APIView):
 
 
 # ============================================================
-# RÉSUMÉ IA DE LA DISCUSSION (pour agents technique/annexe)
+# RÃ‰SUMÃ‰ IA DE LA DISCUSSION (pour agents technique/annexe)
 # ============================================================
 class ResumeIAView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, ticket_id):
-        """Génère un résumé intelligent de la discussion d'un ticket"""
+        """GÃ©nÃ¨re un rÃ©sumÃ© intelligent de la discussion d'un ticket"""
         try:
             ticket = Ticket.objects.select_related('client', 'agent', 'type_service').get(id=ticket_id)
         except Ticket.DoesNotExist:
             return Response({'error': 'Ticket introuvable'}, status=status.HTTP_404_NOT_FOUND)
 
         if not verifier_acces_ticket(request.user, ticket):
-            return Response({'error': 'Accès refusé'}, status=status.HTTP_403_FORBIDDEN)
+            return Response({'error': 'AccÃ¨s refusÃ©'}, status=status.HTTP_403_FORBIDDEN)
 
         messages = ticket.messages.all().order_by('created_at')
         escalades = ticket.escalades.all().order_by('-created_at')
 
-        # Construire le résumé
+        # Construire le rÃ©sumÃ©
         client_name = f"{ticket.client.prenom} {ticket.client.nom}" if ticket.client else "Inconnu"
-        agent_name = f"{ticket.agent.prenom} {ticket.agent.nom}" if ticket.agent else "Non assigné"
-        service = ticket.type_service.libelle if ticket.type_service else "Non spécifié"
+        agent_name = f"{ticket.agent.prenom} {ticket.agent.nom}" if ticket.agent else "Non assignÃ©"
+        service = ticket.type_service.libelle if ticket.type_service else "Non spÃ©cifiÃ©"
 
         # Statistiques de la conversation
         total_msgs = messages.count()
         client_msgs = messages.filter(expediteur_type='client').count()
         agent_msgs = total_msgs - client_msgs
 
-        # Timeline résumée (Informations réduites, le reste est dans la barre)
+        # Timeline rÃ©sumÃ©e (Informations rÃ©duites, le reste est dans la barre)
         timeline = []
 
-        # Résumé des escalades
+        # RÃ©sumÃ© des escalades
         for esc in escalades:
             source = f"{esc.agent_source.prenom} {esc.agent_source.nom}" if esc.agent_source else "Inconnu"
-            timeline.append(f"🔺 Escalade {esc.type_escalade} par {source} — Motif : {esc.motif}")
+            timeline.append(f"ðŸ”º Escalade {esc.type_escalade} par {source} â€” Motif : {esc.motif}")
 
-        # Extraire les messages clés (premier, dernier du client, dernier de l'agent)
+        # Extraire les messages clÃ©s (premier, dernier du client, dernier de l'agent)
         key_messages = []
         if messages.exists():
             first_msg = messages.first()
@@ -243,10 +243,10 @@ class ResumeIAView(APIView):
                     'role': last_agent_msg.expediteur_type,
                     'contenu': last_agent_msg.contenu[:200],
                     'date': last_agent_msg.created_at.strftime('%d/%m %H:%M'),
-                    'label': 'Dernière réponse agent'
+                    'label': 'DerniÃ¨re rÃ©ponse agent'
                 })
 
-        # Génération du résumé textuel (Laissé vide pour l'intégration de l'API externe)
+        # GÃ©nÃ©ration du rÃ©sumÃ© textuel (LaissÃ© vide pour l'intÃ©gration de l'API externe)
         summary_text = ""
 
         return Response({
@@ -258,5 +258,31 @@ class ResumeIAView(APIView):
                 'messages_client': client_msgs,
                 'messages_agent': agent_msgs,
                 'duree_jours': (timezone.now() - ticket.created_at).days if ticket.created_at else 0,
+            }
+        })
+class ResumeIAView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, ticket_id):
+        from apps.tickets.models import Ticket
+        try:
+            ticket = Ticket.objects.select_related('client', 'agent', 'type_service').get(id=ticket_id)
+        except Ticket.DoesNotExist:
+            return Response({'error': 'Ticket introuvable'}, status=status.HTTP_404_NOT_FOUND)
+
+        if not verifier_acces_ticket(request.user, ticket):
+            return Response({'error': 'Accès refusé'}, status=status.HTTP_403_FORBIDDEN)
+
+        # Get latest resume from escalades or ticket
+        escalades = ticket.escalades.all().order_by('-created_at')
+        if escalades.exists() and escalades.first().resume_ia:
+            resume = escalades.first().resume_ia
+        else:
+            resume = ticket.resume_ia
+
+        return Response({
+            'resume': resume,
+            'stats': {
+                'total_messages': ticket.messages.count()
             }
         })

@@ -164,3 +164,54 @@ def notifier_escalade(ticket, escalade):
         contexte=contexte,
         ticket=ticket,
     )
+
+
+def notifier_retour_ticket(ticket, agent_retour, commentaire=''):
+    """Envoie un email à l'agent helpdesk et au client quand un ticket est renvoyé par un agent technique/annexe"""
+    role_labels = {
+        'agent_technique': 'Agent Technique',
+        'agent_annexe': 'Agent Annexe',
+    }
+    agent_retour_label = f"{agent_retour.prenom} {agent_retour.nom} ({role_labels.get(agent_retour.role, agent_retour.role)})"
+    date_str = timezone.now().strftime('%d/%m/%Y à %H:%M')
+
+    # 1) Notifier l'agent helpdesk d'origine
+    if ticket.agent:
+        contexte_agent = {
+            'destinataire_prenom': ticket.agent.prenom,
+            'destinataire_nom':    ticket.agent.nom,
+            'numero_ticket':       ticket.numero_ticket,
+            'titre':               ticket.titre,
+            'agent_retour':        agent_retour_label,
+            'commentaire':         commentaire,
+            'date':                date_str,
+            'message_principal':   f"Le ticket {ticket.numero_ticket} vous a été renvoyé par {agent_retour_label}. Il est de nouveau sous votre responsabilité.",
+            'message_fin':         "Veuillez reprendre le traitement de ce ticket dès que possible.",
+        }
+        envoyer_email(
+            destinataire=ticket.agent,
+            type_email=TypeEmail.STATUT_CHANGE,
+            sujet=f"[AT] Ticket {ticket.numero_ticket} renvoyé — Action requise",
+            contexte=contexte_agent,
+            ticket=ticket,
+        )
+
+    # 2) Notifier le client
+    contexte_client = {
+        'destinataire_prenom': ticket.client.prenom,
+        'destinataire_nom':    ticket.client.nom,
+        'numero_ticket':       ticket.numero_ticket,
+        'titre':               ticket.titre,
+        'agent_retour':        agent_retour_label,
+        'commentaire':         commentaire,
+        'date':                date_str,
+        'message_principal':   "Votre réclamation a été analysée par notre équipe spécialisée et est de nouveau en cours de traitement par votre agent dédié.",
+        'message_fin':         "Nous vous tiendrons informé de l'avancement de votre dossier.",
+    }
+    envoyer_email(
+        destinataire=ticket.client,
+        type_email=TypeEmail.STATUT_CHANGE,
+        sujet=f"[AT] Réclamation {ticket.numero_ticket} — Mise à jour",
+        contexte=contexte_client,
+        ticket=ticket,
+    )

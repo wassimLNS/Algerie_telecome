@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MessageSquare, Clock, Trash2, Filter } from 'lucide-react';
+import { MessageSquare, Clock, Trash2, Filter, BrainCircuit } from 'lucide-react';
 import { deleteTicket } from '@/api/tickets';
 import { cn } from '@/lib/utils';
 
@@ -12,12 +12,12 @@ export function CustomerTicketList({ tickets, loading, onSelectTicket, onTicketD
   const [filterStatus, setFilterStatus] = useState('');
 
   const STATUS_MAP = {
-    soumis: { label: 'Nouveau', color: 'bg-indigo-100 text-indigo-700' },
+    soumis: { label: t('portal.new'), color: 'bg-indigo-100 text-indigo-700' },
     en_cours: { label: t('portal.in_progress'), color: 'bg-amber-100 text-amber-800' },
     resolu: { label: t('portal.resolved'), color: 'bg-emerald-100 text-emerald-800' },
     ferme: { label: t('portal.closed'), color: 'bg-slate-100 text-slate-600' },
     rejete: { label: t('portal.rejected'), color: 'bg-red-100 text-red-800' },
-    escalade: { label: 'Escalad\u00e9', color: 'bg-purple-100 text-purple-800' },
+    escalade: { label: t('portal.escalated'), color: 'bg-purple-100 text-purple-800' },
   };
 
   if (loading) {
@@ -45,7 +45,7 @@ export function CustomerTicketList({ tickets, loading, onSelectTicket, onTicketD
         <Filter className="w-4 h-4 text-slate-400" />
         <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}
           className="px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-bold bg-white cursor-pointer focus:ring-2 focus:ring-[#0055A4]/30 focus:outline-none">
-          <option value="">Tous les statuts</option>
+          <option value="">{t('portal.all_statuses')}</option>
           {Object.entries(STATUS_MAP).map(([key, val]) => (
             <option key={key} value={key}>{val.label}</option>
           ))}
@@ -108,6 +108,7 @@ export function CustomerTicketList({ tickets, loading, onSelectTicket, onTicketD
               <p className="text-sm font-bold text-slate-600 italic line-clamp-2">
                 {ticket.titre}
               </p>
+
 
               <div className="pt-6 border-t flex justify-between items-center">
                 <Button
