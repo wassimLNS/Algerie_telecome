@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { getCentres, createCentre, updateCentre, deleteCentre } from '@/api/admin';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Plus, Search, Edit2, Trash2, MapPin, Phone, Mail, Loader2, Server, X } from 'lucide-react';
 
 export function CentreManagement() {
+  const { t } = useTranslation();
   const [centres, setCentres] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');

@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Card, CardHeader, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MessageSquare, Clock, Trash2, Filter } from 'lucide-react';
+import { MessageSquare, Clock, Trash2, Filter, BrainCircuit } from 'lucide-react';
 import { deleteTicket } from '@/api/tickets';
 import { cn } from '@/lib/utils';
 
@@ -108,6 +108,19 @@ export function CustomerTicketList({ tickets, loading, onSelectTicket, onTicketD
               <p className="text-sm font-bold text-slate-600 italic line-clamp-2">
                 {ticket.titre}
               </p>
+
+              {/* AI Triage Summary */}
+              {ticket.resume_ia && (
+                <div className="bg-purple-50/50 border border-purple-100 rounded-xl p-3">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <BrainCircuit className="w-3 h-3 text-purple-600" />
+                    <span className="text-[9px] font-black uppercase tracking-widest text-purple-600">Résumé IA</span>
+                  </div>
+                  <p className="text-xs text-slate-700 font-medium line-clamp-2 leading-relaxed">
+                    {ticket.resume_ia}
+                  </p>
+                </div>
+              )}
 
               <div className="pt-6 border-t flex justify-between items-center">
                 <Button

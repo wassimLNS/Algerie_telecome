@@ -4,6 +4,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { SupportChatbot } from '@/components/features/portal/SupportChatbot';
 import { LanguageButton } from '@/components/shared/LanguageButton';
 import { getServiceTypes, createTicket, uploadAttachment } from '@/api/tickets';
 import { getMessages, sendMessage as sendMessageAPI, sendMessageWithAttachment } from '@/api/chat';
@@ -24,6 +25,8 @@ export function NewTicketForm({ userPhone, onSubmit }) {
   const [attachment, setAttachment] = useState(null);
   const [attachmentPreview, setAttachmentPreview] = useState(null);
   const [error, setError] = useState('');
+  const [showChatbot, setShowChatbot] = useState(false);
+  const [pendingTicketData, setPendingTicketData] = useState(null);
 
   // ─── Chat state (after ticket creation) ───
   const [createdTicket, setCreatedTicket] = useState(null);
@@ -88,22 +91,37 @@ export function NewTicketForm({ userPhone, onSubmit }) {
       return;
     }
 
+    const tServiceName = serviceTypes.find(s => s.id === parseInt(typeService))?.libelle || '';
+    setPendingTicketData({
+      type_service: parseInt(typeService),
+      typeServiceName: tServiceName,
+      titre: titre || description.substring(0, 50),
+      description,
+    });
+    setShowChatbot(true);
+  };
+
+  const executeFinalSubmission = async (aiHistory) => {
+    setShowChatbot(false);
     setIsSubmitting(true);
     setError('');
 
     try {
       const ticketData = {
-        type_service: parseInt(typeService),
-        titre: titre || description.substring(0, 50),
-        description,
+        ...pendingTicketData
       };
+      delete ticketData.typeServiceName; // Don't send this to backend
+
+      if (aiHistory && aiHistory.length > 0) {
+        ticketData.historique_ia = aiHistory.map(m => `${m.role === 'bot' ? 'Assistant' : 'Client'}: ${m.text}`).join('\n');
+      }
+
       const newTicket = await createTicket(ticketData);
 
       if (attachment && newTicket.id) {
         try { await uploadAttachment(newTicket.id, attachment); } catch (e) { console.error(e); }
       }
 
-      // Show inline chat instead of redirecting
       setCreatedTicket(newTicket);
       onSubmit(newTicket);
     } catch (err) {
@@ -458,6 +476,12 @@ export function NewTicketForm({ userPhone, onSubmit }) {
         </div>
       </div>
     )}
+      <SupportChatbot 
+        isOpen={showChatbot} 
+        ticketData={pendingTicketData} 
+        onCancel={() => setShowChatbot(false)} 
+        onForceSubmit={executeFinalSubmission} 
+      />
     </>
   );
 }

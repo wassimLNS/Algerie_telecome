@@ -1,5 +1,5 @@
-from django.urls import path
-from .views import (TypesServiceView, MesTicketsView, MonTicketDetailView, MesTicketsAgentView, TicketAgentDetailView, TicketsEscaladesView, TousLesTicketsView, AttribuerTicketView, PiecesJointesView, PieceJointeDownloadView, EscaladerTicketView, TicketHistoriqueClientView, ToggleEmailView, RetournerTicketView, CreerTicketACTELView)
+﻿from django.urls import path
+from .views import (TypesServiceView, MesTicketsView, MonTicketDetailView, MesTicketsAgentView, TicketAgentDetailView, TicketsEscaladesView, TousLesTicketsView, AttribuerTicketView, PiecesJointesView, PieceJointeDownloadView, EscaladerTicketView, TicketHistoriqueClientView, ToggleEmailView, RetournerTicketView, CreerTicketACTELView, HFChatbotView)
 
 urlpatterns = [
     path('types-service/', TypesServiceView.as_view(), name='types-service'),
@@ -17,4 +17,5 @@ urlpatterns = [
     path('<uuid:ticket_id>/pieces-jointes/', PiecesJointesView.as_view(), name='pieces-jointes'),
     path('pieces-jointes/<int:piece_id>/download/', PieceJointeDownloadView.as_view(), name='piece-jointe-download'),
     path('<uuid:ticket_id>/toggle-email/', ToggleEmailView.as_view(), name='toggle-email'),
+    path('chat-support/', HFChatbotView.as_view(), name='chat-support'),
 ]

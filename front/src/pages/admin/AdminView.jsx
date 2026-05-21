@@ -36,6 +36,8 @@ export default function AdminView() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterService, setFilterService] = useState('all');
   const [filterAgent, setFilterAgent] = useState('all');
+  const [filterStatut, setFilterStatut] = useState('all');
+  const [filterEnRetard, setFilterEnRetard] = useState(false);
   const [filterStartDate, setFilterStartDate] = useState('');
   const [filterEndDate, setFilterEndDate] = useState('');
   const [assignmentMode, _setAssignmentMode] = useState('auto');
@@ -55,6 +57,8 @@ export default function AdminView() {
       const filters = {};
       if (filterService !== 'all' && activeTab !== 'sessions') filters.service = filterService;
       if (filterAgent !== 'all' && activeTab !== 'sessions') filters.agent_id = filterAgent;
+      if (filterStatut !== 'all' && activeTab !== 'sessions') filters.statut = filterStatut;
+      if (filterEnRetard && activeTab !== 'sessions') filters.en_retard = true;
       if (filterStartDate) filters.start_date = filterStartDate;
       if (filterEndDate) filters.end_date = filterEndDate;
 
@@ -84,12 +88,15 @@ export default function AdminView() {
       setSessions(sess);
       
       // Local search filtering for tickets (frontend only)
-      if (searchTerm) {
+      if (searchTerm || filterStatut !== 'all' || filterEnRetard) {
         const q = searchTerm.toLowerCase();
         setTickets(t.filter(ticket => 
+          (searchTerm === '' ||
           ticket.numero_ticket?.toLowerCase().includes(q) ||
           ticket.client_nom?.toLowerCase().includes(q) ||
-          ticket.client_prenom?.toLowerCase().includes(q)
+          ticket.client_prenom?.toLowerCase().includes(q))
+          && (filterStatut === 'all' || ticket.statut === filterStatut)
+          && (!filterEnRetard || (new Date(ticket.echeance_sla) < new Date() && !['resolu', 'ferme', 'rejete'].includes(ticket.statut)))
         ));
       } else {
         setTickets(t);
@@ -99,7 +106,7 @@ export default function AdminView() {
     } finally {
       if (!isBackground) setLoading(false);
     }
-  }, [filterService, filterAgent, filterStartDate, filterEndDate, searchTerm, activeTab]);
+  }, [filterService, filterAgent, filterStatut, filterEnRetard, filterStartDate, filterEndDate, searchTerm, activeTab]);
 
   useEffect(() => {
     fetchAll();
@@ -154,11 +161,13 @@ export default function AdminView() {
     setSearchTerm('');
     setFilterService('all');
     setFilterAgent('all');
+    setFilterStatut('all');
+    setFilterEnRetard(false);
     setFilterStartDate('');
     setFilterEndDate('');
   };
 
-  const hasFilters = searchTerm || filterService !== 'all' || filterAgent !== 'all' || filterStartDate || filterEndDate;
+  const hasFilters = searchTerm || filterService !== 'all' || filterAgent !== 'all' || filterStatut !== 'all' || filterEnRetard || filterStartDate || filterEndDate;
 
   // Get unique services from tickets for filter dropdown
   const serviceTypes = [...new Set(tickets.map(t => t.type_service_libelle).filter(Boolean))];
@@ -204,6 +213,22 @@ export default function AdminView() {
             </div>
           )}
 
+          {/* Status filter */}
+          {activeTab !== 'sessions' && (
+            <div className="flex items-center gap-2">
+              <select value={filterStatut} onChange={(e) => setFilterStatut(e.target.value)}
+                className="h-12 min-w-[12rem] text-[10px] font-black uppercase rounded-2xl shadow-sm bg-white border border-slate-200 px-4 focus:outline-none focus:ring-2 focus:ring-[#0055A4]/20 cursor-pointer">
+                <option value="all">Tous les états</option>
+                <option value="soumis">{t('portal.new')}</option>
+                <option value="en_cours">{t('portal.in_progress')}</option>
+                <option value="escalade">{t('portal.escalated')}</option>
+                <option value="resolu">{t('portal.resolved')}</option>
+                <option value="ferme">{t('portal.closed')}</option>
+                <option value="rejete">{t('portal.rejected')}</option>
+              </select>
+            </div>
+          )}
+
           {/* Agent filter */}
           <div className="flex items-center gap-2">
             {activeTab === 'sessions' ? (
@@ -221,6 +246,25 @@ export default function AdminView() {
               </select>
             )}
           </div>
+
+          {/* Toggle en retard */}
+          {activeTab !== 'sessions' && (
+            <div className="flex items-center gap-2 bg-slate-50 px-4 py-2 rounded-2xl border shadow-inner h-12">
+              <span className="text-[10px] font-black uppercase text-slate-500">En retard</span>
+              <button
+                onClick={() => setFilterEnRetard(!filterEnRetard)}
+                className={cn(
+                  "relative inline-flex h-5 w-9 items-center rounded-full transition-colors cursor-pointer",
+                  filterEnRetard ? "bg-red-500" : "bg-slate-300"
+                )}
+              >
+                <span className={cn(
+                  "inline-block h-3 w-3 transform rounded-full bg-white transition-transform shadow-sm",
+                  filterEnRetard ? "translate-x-5" : "translate-x-1"
+                )} />
+              </button>
+            </div>
+          )}
 
           {/* Date range */}
           <div className="flex items-center gap-3 bg-slate-50 px-4 py-2 rounded-2xl border shadow-inner">

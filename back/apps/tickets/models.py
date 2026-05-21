@@ -102,6 +102,7 @@ class Ticket(models.Model):
     # --- Contenu ---
     titre       = models.CharField(max_length=255)
     description = models.TextField()
+    resume_ia   = models.TextField(null=True, blank=True)
 
     # --- Attribution ---
     attribution_auto = models.BooleanField(default=True)

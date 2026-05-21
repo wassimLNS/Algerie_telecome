@@ -5,7 +5,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MessageSquare, Send, AlertCircle, FileText, Tag, Paperclip, Eye, X, Loader2, Calendar, Trash2, ImageIcon } from 'lucide-react';
+import { MessageSquare, Send, AlertCircle, FileText, Tag, Paperclip, Eye, X, Loader2, Calendar, Trash2, ImageIcon, BrainCircuit } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import api from '@/api/axios';
 import { deleteTicket } from '@/api/tickets';
@@ -207,6 +207,22 @@ export function CustomerChatDrawer({ ticket, messages = [], onClose, onSendMessa
                   <p className="font-bold leading-relaxed">{ticket.description}</p>
                   <p className="text-[9px] mt-3 font-black uppercase opacity-60 text-white">
                     Vous • {ticket.created_at ? new Date(ticket.created_at).toLocaleString('fr-FR') : ''}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* ─── AI Summary ─── */}
+            {ticket?.resume_ia && (
+              <div className="flex justify-start">
+                <div className="max-w-[85%] p-5 rounded-3xl rounded-tl-none text-sm shadow-lg bg-purple-50 border border-purple-100 text-slate-800 text-left">
+                  <div className="flex items-center gap-2 mb-2">
+                    <BrainCircuit className="w-4 h-4 text-purple-600" />
+                    <p className="text-[10px] font-black uppercase text-purple-600 tracking-widest">Résumé IA (Triage Initial)</p>
+                  </div>
+                  <p className="font-bold leading-relaxed whitespace-pre-wrap">{ticket.resume_ia}</p>
+                  <p className="text-[9px] mt-3 font-black uppercase opacity-60 text-slate-400">
+                    Système
                   </p>
                 </div>
               </div>

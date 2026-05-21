@@ -6,6 +6,12 @@ export const getServiceTypes = async () => {
   return response.data;
 };
 
+// Chat with HF Support Bot
+export const chatWithSupport = async (payload) => {
+  const response = await api.post('/tickets/chat-support/', payload);
+  return response.data;
+};
+
 // Get client's own tickets
 export const getMyTickets = async () => {
   const response = await api.get('/tickets/mes-tickets/');

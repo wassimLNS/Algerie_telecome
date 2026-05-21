@@ -499,6 +499,32 @@ export default function WorkspaceView({ agentRole = 'agent' }) {
                   </div>
                 )}
 
+                {/* AI Triage Summary */}
+                {selectedTicket.resume_ia && (
+                  <div className="workspace-description-block mt-4">
+                    <div className="flex items-start gap-3 p-3 md:p-4 bg-purple-50 rounded-xl md:rounded-2xl border border-purple-100">
+                      <BrainCircuit className="w-4 h-4 md:w-5 md:h-5 text-purple-600 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-[8px] md:text-[9px] font-black uppercase text-purple-600 tracking-widest mb-1">Résumé IA (Triage Initial)</p>
+                        <p className="text-xs md:text-sm font-bold text-slate-800 leading-relaxed whitespace-pre-wrap">{selectedTicket.resume_ia}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* AI Escalation Summary */}
+                {selectedTicket.resume_escalade_ia && (
+                  <div className="workspace-description-block mt-4">
+                    <div className="flex items-start gap-3 p-3 md:p-4 bg-indigo-50 rounded-xl md:rounded-2xl border border-indigo-100">
+                      <BrainCircuit className="w-4 h-4 md:w-5 md:h-5 text-indigo-600 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-[8px] md:text-[9px] font-black uppercase text-indigo-600 tracking-widest mb-1">Résumé IA (Escalade)</p>
+                        <p className="text-xs md:text-sm font-bold text-slate-800 leading-relaxed whitespace-pre-wrap">{selectedTicket.resume_escalade_ia}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Pieces Jointes */}
                 {piecesJointes.length > 0 && (
                   <div className="workspace-pj-section">
