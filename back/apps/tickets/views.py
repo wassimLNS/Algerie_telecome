@@ -291,7 +291,27 @@ class RetournerTicketView(APIView):
 
         # Remettre le ticket en_cours chez l'agent d'origine
         ticket.statut = 'en_cours'
-        ticket.save(update_fields=['statut'])
+
+        # Si le ticket a été créé directement par ACTEL, il n'a pas encore d'agent helpdesk.
+        # On tente de l'auto-attribuer si l'option est activée.
+        if not ticket.agent and ticket.centre:
+            from apps.centres.models import ParametresCentre
+            from apps.users.models import Utilisateur, Role
+            try:
+                params = ParametresCentre.objects.get(centre=ticket.centre)
+                if params.attribution_auto_active:
+                    agents = Utilisateur.objects.filter(centre=ticket.centre, role=Role.AGENT, actif=True)
+                    if agents.exists():
+                        agent_min = min(
+                            agents,
+                            key=lambda a: a.tickets_agent.exclude(statut__in=['ferme', 'rejete']).count()
+                        )
+                        ticket.agent = agent_min
+                        ticket.attribution_auto = True
+            except ParametresCentre.DoesNotExist:
+                pass
+
+        ticket.save(update_fields=['statut', 'agent', 'attribution_auto'])
 
         # CrÃ©er un message systÃ¨me dans le chat pour tracer le retour
         from apps.chat.models import Message
