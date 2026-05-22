@@ -457,7 +457,7 @@ export default function WorkspaceView({ agentRole = 'agent' }) {
             </button>
 
             {showDetails && (
-              <>
+              <div className="overflow-y-auto max-h-[40vh] shrink-0 border-b bg-white">
                 {/* Ticket Summary Bar */}
                 <div className="workspace-ticket-summary-bar">
                   <div className="workspace-summary-item">
@@ -549,7 +549,7 @@ export default function WorkspaceView({ agentRole = 'agent' }) {
                     </div>
                   </div>
                 )}
-              </>
+              </div>
             )}
 
             {/* Chat Area */}
